@@ -225,6 +225,32 @@
         Use seu código como senha. Você será solicitado a definir uma nova senha.
       </div>
     </div>
+    <div style="text-align:center;margin-top:14px;">
+      <button onclick="resetPwdOpen()" style="background:none;border:none;color:#3b82f6;font-size:12px;cursor:pointer;text-decoration:underline;">Esqueci minha senha</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== RESET PASSWORD OVERLAY ===== -->
+<div id="reset-pwd-overlay" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(10,12,20,0.97);align-items:center;justify-content:center;">
+  <div style="background:#161b2e;border:1px solid #2d3a5c;border-radius:16px;padding:48px 40px;width:100%;max-width:420px;box-shadow:0 24px 64px rgba(0,0,0,0.6);">
+    <div style="text-align:center;margin-bottom:28px;">
+      <div style="font-size:36px;margin-bottom:10px;">🔑</div>
+      <div style="font-size:20px;font-weight:700;color:#e2e8f0;font-family:Syne,sans-serif;">Redefinir Senha</div>
+      <div style="font-size:12px;color:#64748b;margin-top:6px;">Sua senha será redefinida para o código do comercial.</div>
+    </div>
+    <div style="margin-bottom:16px;">
+      <label style="display:block;font-size:11px;font-weight:600;color:#94a3b8;margin-bottom:6px;text-transform:uppercase;letter-spacing:.6px;">Código do Comercial</label>
+      <input id="reset-cod" type="text" placeholder="Digite seu código"
+        style="width:100%;box-sizing:border-box;padding:11px 14px;background:#0f1320;border:1px solid #2d3a5c;border-radius:8px;color:#e2e8f0;font-size:15px;outline:none;"
+        onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#2d3a5c'">
+    </div>
+    <div id="reset-msg" style="font-size:12px;min-height:18px;margin-bottom:12px;"></div>
+    <button onclick="doResetPwd()"
+      style="width:100%;padding:13px;background:linear-gradient(135deg,#d97706,#b45309);border:none;border-radius:8px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:Syne,sans-serif;">Redefinir Senha</button>
+    <div style="text-align:center;margin-top:14px;">
+      <button onclick="resetPwdClose()" style="background:none;border:none;color:#64748b;font-size:12px;cursor:pointer;text-decoration:underline;">Voltar ao login</button>
+    </div>
   </div>
 </div>
 
@@ -7455,6 +7481,33 @@ function _applyUserFilter(){
 
 function authChangePwdOpen(){
   _showChangePwd(false);
+}
+
+function resetPwdOpen(){
+  document.getElementById('auth-overlay').style.display='none';
+  document.getElementById('reset-cod').value='';
+  document.getElementById('reset-msg').textContent='';
+  document.getElementById('reset-pwd-overlay').style.display='flex';
+}
+
+function resetPwdClose(){
+  document.getElementById('reset-pwd-overlay').style.display='none';
+  document.getElementById('auth-overlay').style.display='flex';
+}
+
+function doResetPwd(){
+  var cod = document.getElementById('reset-cod').value.trim();
+  var msgEl = document.getElementById('reset-msg');
+  if(!cod){ msgEl.textContent='Informe o código do comercial.'; msgEl.style.color='#ef4444'; return; }
+  var user = USERS_DATA.find(function(u){ return u.cod===cod; });
+  if(!user){ msgEl.textContent='Código não encontrado.'; msgEl.style.color='#ef4444'; return; }
+  if(user.role==='admin'){ msgEl.textContent='Conta admin não pode ser redefinida aqui.'; msgEl.style.color='#ef4444'; return; }
+  // Remove senha salva → volta para senha padrão (código)
+  localStorage.removeItem('pwd_'+cod);
+  localStorage.removeItem('pwdset_'+cod);
+  msgEl.textContent='Senha redefinida! Use seu código como senha para entrar.';
+  msgEl.style.color='#22c55e';
+  setTimeout(function(){ resetPwdClose(); }, 2500);
 }
 
 window.addEventListener('keydown',function(e){
