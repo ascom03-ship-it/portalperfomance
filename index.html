@@ -309,7 +309,7 @@
     <div class="search-row">
       <div class="search-input-wrap">
         <span class="search-icon">🔎</span>
-        <input type="text" id="codigo-input" placeholder="Digite o código do parceiro (ex: 5845, 9288…)"
+        <input type="text" id="codigo-input" placeholder="Digite o código do parceiro"
           onkeydown="if(event.key==='Enter') buscarCodigo(this.value.trim())" autocomplete="off"/>
       </div>
       <button class="btn btn-primary" onclick="buscarCodigo(document.getElementById('codigo-input').value.trim())">🔍 Buscar</button>
@@ -6878,7 +6878,13 @@ function buscarCodigo(cod){
   if(!entry&&BY_SUPER[cod])    entry=BY_SUPER[cod][0];
   var _rd = (__currentUser && __currentUser.role!=="admin") ? RAW_DATA : ALL_RAW_DATA;
   const hasData=_rd.some(r=>r._codigo===cod||r.colD.startsWith(cod));
-  var activeRD = _rd;
+  // Não-admin: bloqueia busca de códigos fora da própria hierarquia
+  if(!hasData && __currentUser && __currentUser.role!=='admin'){
+    document.getElementById('hier-card').classList.remove('visible');
+    document.getElementById('search-hint').innerHTML=
+      '<span style="color:var(--accent4)">&#9888; C&oacute;digo <strong>'+cod+'</strong> n&atilde;o encontrado na sua hierarquia.</span>';
+    activeParceiro=null; searchActive=false; showInitialState(); return;
+  }
   if(!entry&&!hasData){
     document.getElementById('hier-card').classList.remove('visible');
     document.getElementById('search-hint').innerHTML=
