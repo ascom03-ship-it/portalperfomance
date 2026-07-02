@@ -367,7 +367,6 @@
     <div class="section-title">Acordos de Performance</div>
     <div style="display:flex;gap:8px;align-items:center;">
       <span class="badge active" id="result-count">&#8212;</span>
-      <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px;" onclick="exportCSV()">&#11015; CSV</button>
     </div>
   </div>
 
@@ -419,7 +418,7 @@
       <div class="search-row">
         <div class="search-input-wrap">
           <span class="search-icon">&#128270;</span>
-          <input type="text" id="meta-input" placeholder="Digite o código (ex: 3373) ou nome do parceiro…"
+          <input type="text" id="meta-input" placeholder="Digite o código ou nome do parceiro"
             oninput="metaBuscar(this.value.trim())" autocomplete="off"/>
         </div>
         <button class="btn btn-danger" onclick="metaLimpar()">&#10005; Limpar</button>
