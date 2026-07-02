@@ -262,7 +262,7 @@
     <div class="logo-icon">📊</div>
     <div class="logo-text">Acordos de <span>Performance</span></div>
   </div>
-  <div class="header-meta">Última atualização: <strong id="last-update">—</strong></div>
+  <div class="header-meta">Última atualização: <strong id="last-update">02/07/2026</strong></div>
 <div style="display:flex;align-items:center;gap:10px;"><span id="auth-user-badge" style="display:none;font-size:12px;color:#94a3b8;background:#1e2a44;padding:5px 12px;border-radius:20px;font-family:Syne,sans-serif;"></span><button onclick="authChangePwdOpen()" id="auth-chpwd-btn" style="display:inline-block;background:none;border:1px solid #2d3a5c;color:#94a3b8;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:11px;" title="Alterar senha">🔑</button><button onclick="doLogout()" id="auth-logout-btn" style="display:none;background:#1e2a44;border:1px solid #2d3a5c;color:#e2e8f0;padding:5px 14px;border-radius:6px;cursor:pointer;font-size:12px;">Sair</button></div></header>
 
 <main>
@@ -338,10 +338,7 @@
         <span id="h-uf">—</span>
       </div>
     </div>
-    <div class="search-hint" id="search-hint">
-      Pesquisa nos campos: <strong>Corretor (D) · Solicitante (E) · Regional (F) · Banco (G) · Órgão (H)</strong>
-      — exibe todos os acordos da hierarquia do parceiro encontrado.
-    </div>
+    <div class="search-hint" id="search-hint"></div>
   </div>
 
   <!-- FILTROS ADICIONAIS -->
@@ -653,6 +650,11 @@ HIERARCHY.forEach(h => {
 });
 
 /* utilitário: remove o prefixo "código - " de um nome */
+function abrevBanco(g){
+  if(!g) return '&mdash;';
+  if(g.indexOf(',')>=0) return 'Todos';
+  return g;
+}
 function soNome(str){
   if(!str) return '—';
   return str.replace(/^\d+\s*-\s*/, '').trim() || '—';
@@ -7043,7 +7045,7 @@ function renderList(){
       card.className = "prev-card "+stCls;
       card.innerHTML =
         '<div class="pc-status">'+r.status+'</div>'+
-        '<div class="pc-banco">'+(r.colG||'&mdash;')+'</div>'+
+        '<div class="pc-banco">'+abrevBanco(r.colG)+'</div>'+
         '<div class="pc-orgao">'+(r.colH||'&mdash;')+'</div>'+
         '<div class="pc-period">'+(r.colQ||'?')+' &rarr; '+(r.colR||'?')+'</div>';
       (function(rec,el){ el.onclick = function(){ openDetail(rec,el); }; })(r,card);
@@ -7062,14 +7064,14 @@ function openDetail(r, cardEl){
     '<div class="accord-card">'+
       '<div class="card-header">'+
         '<h3><span class="status-pill '+stCls+'">'+r.status+'</span>&nbsp;&nbsp;'+
-        (r.colG||"Acordo")+(r.colH?' &mdash; '+r.colH:'')+' &mdash; '+r.colA+'</h3>'+
+        abrevBanco(r.colG)+(r.colH?' &mdash; '+r.colH:'')+' &mdash; '+r.colA+'</h3>'+
         '<button class="close-btn" onclick="closeDetail()">&times;</button>'+
       '</div>'+
       '<div class="card-body">'+
         fld("Data",r.colA)+
         fld(L.solic,r.colE)+
         fld(L.reg,r.colF)+
-        fld(L.banco,r.colG)+
+        fld(L.banco,abrevBanco(r.colG))+
         fld(L.orgao,r.colH)+
         fld(L.opAt,r.colI)+
         fld(L.opRem,r.colJ)+
