@@ -6940,8 +6940,7 @@ function buscarCodigo(cod){
 function clearSearch(){
   document.getElementById('codigo-input').value = '';
   document.getElementById('hier-card').classList.remove('visible');
-  document.getElementById('search-hint').innerHTML =
-    'Pesquisa nos campos: <strong>Corretor (D) · Solicitante (E) · Regional (F) · Banco (G) · Órgão (H)</strong>';
+  document.getElementById('search-hint').innerHTML = '';
   activeParceiro = null;
   searchActive   = false;
   activeStatusFilter = '';
