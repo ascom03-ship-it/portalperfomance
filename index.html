@@ -7089,7 +7089,7 @@ function openDetail(r, cardEl){
     '<div class="accord-card">'+
       '<div class="card-header">'+
         '<h3><span class="status-pill '+stCls+'">'+r.status+'</span>&nbsp;&nbsp;'+
-        abrevBanco(r.colG)+(r.colH?' &mdash; '+r.colH:'')+' &mdash; '+r.colA+'</h3>'+
+        abrevBanco(r.colG)+(r.colH&&r.colH.toUpperCase()!=='TODOS'?' &mdash; '+r.colH:'')+' &mdash; '+r.colA+'</h3>'+
         '<button class="close-btn" onclick="closeDetail()">&times;</button>'+
       '</div>'+
       '<div class="card-body">'+
