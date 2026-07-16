@@ -469,7 +469,9 @@
         <table style="width:100%;border-collapse:collapse;font-size:13px;">
           <thead style="background:var(--surface2);border-bottom:1px solid var(--border);">
             <tr>
-              <th style="padding:11px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);white-space:nowrap;">M&ecirc;s Apura&ccedil;&atilde;o</th>
+              <th style="padding:11px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);white-space:nowrap;">M&ecirc;s Apura&ccedil;&atilde;o
+                <button id="meta-date-filter-btn" onclick="metaToggleDateFilterPanel(event)" title="Filtrar por ano/m&ecirc;s" style="background:none;border:none;color:#00E5FF;text-shadow:0 0 6px rgba(0,229,255,.7);cursor:pointer;font-size:11px;padding:2px 4px;vertical-align:middle;">&#9660;</button>
+              </th>
               <th style="padding:11px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);white-space:nowrap;">C&oacute;digo</th>
               <th style="padding:11px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);white-space:nowrap;">Nome Parceiro</th>
               <th style="padding:11px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);white-space:nowrap;">Banco</th>
@@ -7212,6 +7214,167 @@ function exportCSV(){
 var LEGADO_DATA = LEGADO_JSON;
 var metaResultsAll = [];
 var metaActiveFilter = null;
+var metaDateFilterSelected = null; // array of "YYYY-MM" selecionados; null = todos
+var META_MESES = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+
+function metaParseMesKey(mes){
+  if(!mes) return null;
+  var p = mes.split("/");
+  if(p.length!==3) return null;
+  var mm = parseInt(p[1],10), yyyy = p[2];
+  if(!mm || !yyyy) return null;
+  return yyyy+"-"+(mm<10?"0"+mm:""+mm);
+}
+
+function metaClassify(list, tipo){
+  if(!tipo || tipo==="total") return list;
+  if(tipo==="atingiu"){
+    return list.filter(function(r){
+      var c=(r.classificacao||'').toLowerCase();
+      return c.indexOf("atingiu a meta")>=0 && c.indexOf("não atingiu")<0 && c.indexOf("nao atingiu")<0;
+    });
+  }
+  if(tipo==="nao"){
+    return list.filter(function(r){
+      var c=(r.classificacao||'').toLowerCase();
+      return c.indexOf("não atingiu")>=0 || c.indexOf("nao atingiu")>=0 || c.indexOf("não bateu")>=0;
+    });
+  }
+  return list.filter(function(r){
+    var c=(r.classificacao||'').toLowerCase();
+    var isAtingiu = c.indexOf("atingiu a meta")>=0 && c.indexOf("não atingiu")<0 && c.indexOf("nao atingiu")<0;
+    var isNao = c.indexOf("não atingiu")>=0 || c.indexOf("nao atingiu")>=0 || c.indexOf("não bateu")>=0;
+    return !isAtingiu && !isNao;
+  });
+}
+
+function metaApplyAllFilters(){
+  var list = metaClassify(metaResultsAll, metaActiveFilter);
+  if(metaDateFilterSelected){
+    list = list.filter(function(r){ return metaDateFilterSelected.indexOf(metaParseMesKey(r.mes)) >= 0; });
+  }
+  metaRenderTabela(list);
+  document.getElementById("meta-count").textContent = list.length+" resultado"+(list.length!==1?"s":"");
+  var icon = document.getElementById("meta-date-filter-btn");
+  if(icon) icon.style.textShadow = metaDateFilterSelected ? "0 0 10px #00E5FF, 0 0 4px #00E5FF" : "0 0 6px rgba(0,229,255,.7)";
+  return list;
+}
+
+/* ââ FILTRO ANO/M&Ecirc;S (estilo Excel) ââââââââââââââââââââââââââââââââââââ */
+function metaGetYearMonthTree(){
+  var map = {};
+  metaResultsAll.forEach(function(r){
+    var p = (r.mes||"").split("/");
+    if(p.length!==3) return;
+    var mm = parseInt(p[1],10), yyyy = p[2];
+    if(!mm || !yyyy) return;
+    map[yyyy] = map[yyyy] || {};
+    map[yyyy][mm] = true;
+  });
+  return map;
+}
+
+function metaAllChecked(nodeList){
+  for(var i=0;i<nodeList.length;i++){ if(!nodeList[i].checked) return false; }
+  return true;
+}
+
+function metaCloseDateFilterPanel(){
+  var panel = document.getElementById("meta-date-filter-panel");
+  if(panel) panel.remove();
+  document.removeEventListener("click", metaOutsideClickCloseDateFilter, true);
+}
+
+function metaOutsideClickCloseDateFilter(e){
+  var panel = document.getElementById("meta-date-filter-panel");
+  if(panel && !panel.contains(e.target) && e.target.id!=="meta-date-filter-btn"){
+    metaCloseDateFilterPanel();
+  }
+}
+
+function metaToggleDateFilterPanel(ev){
+  if(ev) ev.stopPropagation();
+  var existing = document.getElementById("meta-date-filter-panel");
+  if(existing){ metaCloseDateFilterPanel(); return; }
+
+  var tree = metaGetYearMonthTree();
+  var years = Object.keys(tree).sort();
+  var selectedAll = !metaDateFilterSelected;
+
+  var html = '<div style="padding:10px;max-height:320px;overflow-y:auto;min-width:210px;">';
+  html += '<label style="display:flex;align-items:center;gap:6px;font-weight:700;font-size:12px;padding:4px 2px;cursor:pointer;color:var(--text);">' +
+          '<input type="checkbox" id="meta-df-all" onchange="metaDfToggleAll(this.checked)" '+(selectedAll?"checked":"")+'/> (Selecionar Tudo)</label>';
+
+  years.forEach(function(y){
+    var months = [1,2,3,4,5,6,7,8,9,10,11,12];
+    var yearAllChecked = months.every(function(m){
+      var key = y+"-"+(m<10?"0"+m:""+m);
+      return selectedAll || (metaDateFilterSelected && metaDateFilterSelected.indexOf(key)>=0);
+    });
+    html += '<div style="margin:2px 0;">';
+    html += '<label style="display:flex;align-items:center;gap:6px;font-size:12px;padding:3px 2px;cursor:pointer;color:var(--text);">' +
+      '<input type="checkbox" class="meta-df-year" data-year="'+y+'" onchange="metaDfToggleYear(\''+y+'\', this.checked)" '+(yearAllChecked?"checked":"")+'/> '+y+'</label>';
+    html += '<div style="padding-left:20px;">';
+    months.forEach(function(m){
+      var key = y+"-"+(m<10?"0"+m:""+m);
+      var checked = selectedAll || (metaDateFilterSelected && metaDateFilterSelected.indexOf(key)>=0);
+      html += '<label style="display:flex;align-items:center;gap:6px;font-size:12px;padding:2px;cursor:pointer;color:var(--muted);">' +
+        '<input type="checkbox" class="meta-df-month" data-key="'+key+'" data-year="'+y+'" onchange="metaDfToggleMonth()" '+(checked?"checked":"")+'/> '+META_MESES[m-1]+'</label>';
+    });
+    html += '</div></div>';
+  });
+  html += '</div>';
+  html += '<div style="display:flex;gap:8px;justify-content:flex-end;padding:8px 10px;border-top:1px solid var(--border);">' +
+    '<button class="btn btn-ghost" onclick="metaCloseDateFilterPanel()" style="padding:6px 14px;font-size:12px;">Cancelar</button>' +
+    '<button class="btn btn-primary" onclick="metaDfApply()" style="padding:6px 14px;font-size:12px;">OK</button></div>';
+
+  var btn = document.getElementById("meta-date-filter-btn");
+  var rect = btn.getBoundingClientRect();
+  var panel = document.createElement("div");
+  panel.id = "meta-date-filter-panel";
+  panel.style.cssText = "position:fixed;z-index:9999;background:var(--surface2);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.5);top:"+(rect.bottom+4)+"px;left:"+rect.left+"px;";
+  panel.innerHTML = html;
+  document.body.appendChild(panel);
+  setTimeout(function(){ document.addEventListener("click", metaOutsideClickCloseDateFilter, true); }, 0);
+}
+
+function metaDfToggleAll(checked){
+  var panel = document.getElementById("meta-date-filter-panel");
+  panel.querySelectorAll(".meta-df-year, .meta-df-month").forEach(function(cb){ cb.checked = checked; });
+}
+
+function metaDfToggleYear(year, checked){
+  var panel = document.getElementById("meta-date-filter-panel");
+  panel.querySelectorAll(".meta-df-month[data-year='"+year+"']").forEach(function(cb){ cb.checked = checked; });
+  metaDfSyncAllCheckbox();
+}
+
+function metaDfToggleMonth(){
+  var panel = document.getElementById("meta-date-filter-panel");
+  panel.querySelectorAll(".meta-df-year").forEach(function(yearCb){
+    var y = yearCb.getAttribute("data-year");
+    var monthCbs = panel.querySelectorAll(".meta-df-month[data-year='"+y+"']");
+    yearCb.checked = metaAllChecked(monthCbs);
+  });
+  metaDfSyncAllCheckbox();
+}
+
+function metaDfSyncAllCheckbox(){
+  var panel = document.getElementById("meta-date-filter-panel");
+  var allMonths = panel.querySelectorAll(".meta-df-month");
+  var allCb = document.getElementById("meta-df-all");
+  if(allCb) allCb.checked = metaAllChecked(allMonths);
+}
+
+function metaDfApply(){
+  var panel = document.getElementById("meta-date-filter-panel");
+  var monthCbs = panel.querySelectorAll(".meta-df-month");
+  var checkedKeys = [];
+  monthCbs.forEach(function(cb){ if(cb.checked) checkedKeys.push(cb.getAttribute("data-key")); });
+  metaDateFilterSelected = (checkedKeys.length === monthCbs.length) ? null : checkedKeys;
+  metaCloseDateFilterPanel();
+  metaApplyAllFilters();
+}
 
 function metaBuscar(query){
   if(!query || query.length < 2){
@@ -7225,6 +7388,8 @@ function metaBuscar(query){
   });
   metaResultsAll = results;
   metaActiveFilter = null;
+  metaDateFilterSelected = null;
+  metaCloseDateFilterPanel();
 
   var initS  = document.getElementById("meta-state-initial");
   var empty  = document.getElementById("meta-empty");
@@ -7264,7 +7429,7 @@ function metaBuscar(query){
   document.getElementById("meta-kpi-nao").textContent     = nao;
 
   // Table
-  metaRenderTabela(results);
+  metaApplyAllFilters();
 }
 
 function metaRenderTabela(arr){
@@ -7297,37 +7462,14 @@ function metaFiltrar(tipo){
   allCards.forEach(function(c){ c.style.opacity="1"; c.style.outline="none"; });
   if(metaActiveFilter === tipo){ metaActiveFilter = null; }
   else { metaActiveFilter = tipo; }
-  var filtered;
-  if(!metaActiveFilter || metaActiveFilter==="total"){
-    filtered = metaResultsAll;
-  } else if(metaActiveFilter==="atingiu"){
-    filtered = metaResultsAll.filter(function(r){
-      var c=(r.classificacao||'').toLowerCase();
-      return c.indexOf("atingiu a meta")>=0 && c.indexOf("não atingiu")<0 && c.indexOf("nao atingiu")<0;
-    });
-  } else if(metaActiveFilter==="nao"){
-    filtered = metaResultsAll.filter(function(r){
-      var c=(r.classificacao||'').toLowerCase();
-      return c.indexOf("não atingiu")>=0 || c.indexOf("nao atingiu")>=0 || c.indexOf("não bateu")>=0;
-    });
-  } else {
-    filtered = metaResultsAll.filter(function(r){
-      var c=(r.classificacao||'').toLowerCase();
-      var isAtingiu = c.indexOf("atingiu a meta")>=0 && c.indexOf("não atingiu")<0 && c.indexOf("nao atingiu")<0;
-      var isNao = c.indexOf("não atingiu")>=0 || c.indexOf("nao atingiu")>=0 || c.indexOf("não bateu")>=0;
-      return !isAtingiu && !isNao;
-    });
-  }
   // Highlight active card
   if(metaActiveFilter){
     var idx = {total:0,atingiu:1,nao:2,outros:3}[metaActiveFilter];
-    if(idx!==undefined){ allCards[idx].style.outline="2px solid var(--accent)"; allCards[idx].style.opacity="1"; }
+    if(idx!==undefined && allCards[idx]){ allCards[idx].style.outline="2px solid var(--accent)"; allCards[idx].style.opacity="1"; }
     // Dim others
     allCards.forEach(function(c,i){ if(i!==idx){ c.style.opacity="0.55"; } });
   }
-  // Re-render table
-  metaRenderTabela(filtered);
-  document.getElementById("meta-count").textContent = filtered.length+" resultado"+(filtered.length!==1?"s":"");
+  metaApplyAllFilters();
 }
 
 function metaLimpar(){
@@ -7337,6 +7479,9 @@ function metaLimpar(){
   document.getElementById("meta-results").style.display = "none";
   document.getElementById("meta-kpis").style.display = "none";
   document.getElementById("meta-hint").textContent = "Pesquise por código ou nome do parceiro para ver o atingimento de meta.";
+  metaActiveFilter = null;
+  metaDateFilterSelected = null;
+  metaCloseDateFilterPanel();
 }
 
 
