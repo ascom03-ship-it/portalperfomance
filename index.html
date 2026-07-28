@@ -6974,6 +6974,11 @@ function filtrarPorBanco(banco){
   document.getElementById('hier-card').classList.remove('visible');
   document.getElementById('search-hint').innerHTML =
     'Exibindo acordos ativos do banco: <strong style="color:var(--accent2)">'+banco+'</strong>';
+  // Navegar por banco é uma busca independente — não deve herdar filtros
+  // de Regional/Comercial deixados selecionados de uma busca anterior
+  var _fs=document.getElementById('filter-super'); if(_fs) _fs.value='';
+  var _fr=document.getElementById('filter-reg');   if(_fr) _fr.value='';
+  var _fc=document.getElementById('filter-com');   if(_fc) _fc.value='';
   document.getElementById('filter-status').value = 'Ativo';
   activeStatusFilter = 'Ativo';
   clearActiveKpiCards();
