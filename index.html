@@ -132,6 +132,14 @@
     .state-msg p{font-size:13px;line-height:1.6;}
     .state-msg strong{color:var(--accent);}
 
+    .banco-browser{margin-top:28px;text-align:left;}
+    .banco-browser-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:12px;}
+    .banco-chips{display:flex;flex-wrap:wrap;gap:8px;}
+    .banco-chip{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 14px;
+      font-size:12px;color:var(--text);cursor:pointer;display:flex;align-items:center;gap:8px;transition:border-color .15s,transform .15s;}
+    .banco-chip:hover{border-color:var(--accent);transform:translateY(-1px);}
+    .banco-chip .cnt{background:var(--accent2);color:#06281c;border-radius:20px;padding:1px 8px;font-size:11px;font-weight:700;}
+
     @media(max-width:900px){.kpi-grid{grid-template-columns:repeat(2,1fr);}main{padding:16px;}}
     @media(max-width:560px){.kpi-grid{grid-template-columns:1fr;}}
 
@@ -409,6 +417,10 @@
   <div id="state-initial" class="state-msg">
     <div class="big">&#128270;</div>
     <p>Digite o <strong>c&oacute;digo do parceiro</strong> acima para buscar os acordos de performance<br>relacionados &agrave; hierarquia desse parceiro.</p>
+    <div class="banco-browser" id="banco-browser" style="display:none;">
+      <div class="banco-browser-title">Ou navegue por banco (acordos ativos)</div>
+      <div class="banco-chips" id="banco-chips"></div>
+    </div>
   </div>
   <div class="empty-state" id="empty-state">
     <div class="icon">&#128205;</div>
@@ -6901,6 +6913,7 @@ const PAGE_SIZE  = 15;
 let sortCol = -1, sortAsc = true;
 let activeParceiro = null;
 let activeStatusFilter = '';
+let bancoAtivo = '';
 
 /* ══════════════════════════════════════════════════════════
    INIT
@@ -6922,6 +6935,40 @@ function showInitialState(){
     document.getElementById(id).textContent = "—";
   });
   clearActiveKpiCards();
+  renderBancoBrowser();
+}
+
+function renderBancoBrowser(){
+  var wrap = document.getElementById("banco-browser");
+  var chipsEl = document.getElementById("banco-chips");
+  if(!wrap || !chipsEl) return;
+  var counts = {};
+  (RAW_DATA||[]).forEach(function(r){
+    if(r.status!=='Ativo') return;
+    var b = abrevBanco(r.colG);
+    if(!b || b==='&mdash;') return;
+    counts[b] = (counts[b]||0)+1;
+  });
+  var bancos = Object.keys(counts).sort(function(a,b){ return counts[b]-counts[a]; });
+  if(bancos.length===0){ wrap.style.display="none"; chipsEl.innerHTML=""; return; }
+  wrap.style.display = "block";
+  chipsEl.innerHTML = bancos.map(function(b){
+    return '<div class="banco-chip" onclick="filtrarPorBanco(\''+b.replace(/'/g,"\\'")+'\')">'+
+      b+' <span class="cnt">'+counts[b]+'</span></div>';
+  }).join('');
+}
+
+function filtrarPorBanco(banco){
+  bancoAtivo = banco;
+  activeParceiro = null;
+  document.getElementById('codigo-input').value = '';
+  document.getElementById('hier-card').classList.remove('visible');
+  document.getElementById('search-hint').innerHTML =
+    'Exibindo acordos ativos do banco: <strong style="color:var(--accent2)">'+banco+'</strong>';
+  document.getElementById('filter-status').value = 'Ativo';
+  activeStatusFilter = 'Ativo';
+  clearActiveKpiCards();
+  applyFilters();
 }
 
 
@@ -6980,6 +7027,7 @@ function clearSearch(){
   activeParceiro = null;
   searchActive   = false;
   activeStatusFilter = '';
+  bancoAtivo = '';
   showInitialState();
 }
 
@@ -7015,12 +7063,13 @@ function applyFilters(){
   const r=(document.getElementById('filter-reg')||{value:''}).value;
   const c=(document.getElementById('filter-com')||{value:''}).value;
   const st=document.getElementById('filter-status').value;
-  if(!activeParceiro&&!s&&!r&&!c&&!st){ showInitialState(); return; }
+  if(!activeParceiro&&!s&&!r&&!c&&!st&&!bancoAtivo){ showInitialState(); return; }
   filteredData=RAW_DATA.filter(rec=>{
     if(activeParceiro){
       const pCod=activeParceiro.codigo;
       if(rec._codigo!==pCod&&!rec.colD.startsWith(pCod)) return false;
     }
+    if(bancoAtivo && abrevBanco(rec.colG)!==bancoAtivo) return false;
     if(s&&rec._super!==s) return false;
     if(r&&rec._regional!==r) return false;
     if(c&&rec._comCod!==c) return false;
@@ -7036,6 +7085,8 @@ function clearFilters(){
   var _fc=document.getElementById('filter-com');   if(_fc) _fc.value='';
   document.getElementById('filter-status').value = '';
   activeStatusFilter = '';
+  bancoAtivo = '';
+  document.getElementById('search-hint').innerHTML = '';
   clearActiveKpiCards();
   applyFilters();
 }
@@ -7183,6 +7234,7 @@ function activeParceiroOrDropdownBase(){
       var pCod = activeParceiro.codigo;
       if(rec._codigo!==pCod && !rec.colD.startsWith(pCod)) return false;
     }
+    if(bancoAtivo && abrevBanco(rec.colG)!==bancoAtivo) return false;
     if(s && rec._super !== s) return false;
     if(r && rec._regional !== r) return false;
     if(c && rec._comCod !== c) return false;
