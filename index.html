@@ -6952,10 +6952,19 @@ function renderBancoBrowser(){
   var bancos = Object.keys(counts).sort(function(a,b){ return counts[b]-counts[a]; });
   if(bancos.length===0){ wrap.style.display="none"; chipsEl.innerHTML=""; return; }
   wrap.style.display = "block";
-  chipsEl.innerHTML = bancos.map(function(b){
-    return '<div class="banco-chip" onclick="filtrarPorBanco(\''+b.replace(/'/g,"\\'")+'\')">'+
-      b+' <span class="cnt">'+counts[b]+'</span></div>';
-  }).join('');
+  chipsEl.innerHTML = "";
+  bancos.forEach(function(b){
+    var chip = document.createElement("div");
+    chip.className = "banco-chip";
+    var label = document.createTextNode(b+" ");
+    var cnt = document.createElement("span");
+    cnt.className = "cnt";
+    cnt.textContent = String(counts[b]);
+    chip.appendChild(label);
+    chip.appendChild(cnt);
+    chip.addEventListener("click", function(){ filtrarPorBanco(b); });
+    chipsEl.appendChild(chip);
+  });
 }
 
 function filtrarPorBanco(banco){
