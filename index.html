@@ -140,6 +140,17 @@
     .banco-chip:hover{border-color:var(--accent);transform:translateY(-1px);}
     .banco-chip .cnt{background:var(--accent2);color:#06281c;border-radius:20px;padding:1px 8px;font-size:11px;font-weight:700;}
 
+    .bi-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:20px;}
+    .bi-panel-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;}
+    .bi-panel-sub{font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.5;}
+    .bi-bar-row{display:flex;align-items:center;gap:10px;padding:6px 0;}
+    .bi-bar-rank{width:20px;font-size:11px;color:var(--muted);text-align:right;flex-shrink:0;}
+    .bi-bar-label{width:220px;font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0;}
+    .bi-bar-track{flex:1;background:var(--surface2);border-radius:4px;height:12px;overflow:hidden;}
+    .bi-bar-fill{background:var(--accent2);height:100%;border-radius:4px;}
+    .bi-bar-value{width:36px;font-size:12px;font-weight:700;color:var(--text);text-align:right;flex-shrink:0;}
+    @media(max-width:700px){.bi-bar-label{width:120px;}}
+
     @media(max-width:900px){.kpi-grid{grid-template-columns:repeat(2,1fr);}main{padding:16px;}}
     @media(max-width:560px){.kpi-grid{grid-template-columns:1fr;}}
 
@@ -308,6 +319,9 @@
     </button>
     <button class="tab-btn" onclick="switchTab('meta')" id="tab-btn-meta">
       <span class="tab-icon">&#127919;</span> Atingimento de Meta
+    </button>
+    <button class="tab-btn" onclick="switchTab('indicadores')" id="tab-btn-indicadores" style="display:none;">
+      <span class="tab-icon">&#128202;</span> Indicadores
     </button>
   </nav>
 
@@ -541,6 +555,26 @@
     </div>
 
   </div><!-- /tab-meta -->
+
+  <!-- TAB: Indicadores (admin) -->
+  <div class="tab-pane" id="tab-indicadores">
+    <div class="section-header">
+      <div class="section-title">Indicadores</div>
+    </div>
+
+    <div class="bi-panel">
+      <div class="bi-panel-title">Comerciais com mais performance ativa</div>
+      <div class="bi-panel-sub">Ranking por quantidade de acordos ativos em Acordos Solicitados</div>
+      <div id="bi-ranking-ativos"></div>
+    </div>
+
+    <div class="bi-panel">
+      <div class="bi-panel-title">Comerciais que mais consultam a ferramenta</div>
+      <div class="bi-panel-sub" style="color:var(--accent3);">
+        &#9888; Ainda n&atilde;o dispon&iacute;vel. O site &eacute; est&aacute;tico (sem servidor), entao n&atilde;o existe hoje um jeito de registrar quem acessou, de qualquer dispositivo/navegador, num lugar central. Pra isso funcionar de verdade seria necess&aacute;rio um backend simples (ex.: planilha do Google recebendo cada acesso via script).
+      </div>
+    </div>
+  </div><!-- /tab-indicadores -->
 
 </main>
 </div><!-- /dash-root -->
@@ -7584,6 +7618,39 @@ function switchTab(name){
   var btn  = document.getElementById('tab-btn-'+name);
   if(pane) pane.classList.add('active');
   if(btn)  btn.classList.add('active');
+  if(name==='indicadores') renderIndicadores();
+}
+
+function renderIndicadores(){
+  var container = document.getElementById('bi-ranking-ativos');
+  if(!container) return;
+  var comMap = {};
+  HIERARCHY.forEach(function(h){
+    var cc = _codeOf(h.comercial);
+    if(cc && !comMap[cc]) comMap[cc] = soNome(h.comercial);
+  });
+  var counts = {};
+  ALL_RAW_DATA.forEach(function(r){
+    if(r.status!=='Ativo' || !r._comCod) return;
+    counts[r._comCod] = (counts[r._comCod]||0)+1;
+  });
+  var ranking = Object.keys(counts).map(function(cc){
+    return {nome: comMap[cc]||cc, count: counts[cc]};
+  }).sort(function(a,b){ return b.count-a.count; }).slice(0,15);
+  if(ranking.length===0){
+    container.innerHTML = '<p style="color:var(--muted);font-size:12px;">Nenhum dado dispon&iacute;vel.</p>';
+    return;
+  }
+  var max = ranking[0].count;
+  container.innerHTML = ranking.map(function(r,i){
+    var pct = Math.max(4, Math.round((r.count/max)*100));
+    return '<div class="bi-bar-row" title="'+r.nome+' &mdash; '+r.count+' acordo(s) ativo(s)">'+
+      '<div class="bi-bar-rank">'+(i+1)+'</div>'+
+      '<div class="bi-bar-label">'+r.nome+'</div>'+
+      '<div class="bi-bar-track"><div class="bi-bar-fill" style="width:'+pct+'%"></div></div>'+
+      '<div class="bi-bar-value">'+r.count+'</div>'+
+    '</div>';
+  }).join('');
 }
 
 
@@ -7641,6 +7708,9 @@ function _showDashboard(){
   document.getElementById('auth-logout-btn').style.display='inline-block';
   // Apply data filter for non-admin
   _applyUserFilter();
+  // Aba de Indicadores (BI) so aparece pro admin
+  var btnInd = document.getElementById('tab-btn-indicadores');
+  if(btnInd) btnInd.style.display = (__currentUser.role==='admin') ? '' : 'none';
 }
 
 function _showChangePwd(isFirst){
@@ -7694,6 +7764,9 @@ function doLogout(){
   var fst = document.getElementById('filter-status'); if(fst) fst.value='';
   clearSearch();
   metaLimpar();
+  var btnInd = document.getElementById('tab-btn-indicadores');
+  if(btnInd) btnInd.style.display = 'none';
+  switchTab('acordos');
   _showLogin('Você saiu com sucesso.');
   document.getElementById('auth-msg').style.color='#22c55e';
 }
