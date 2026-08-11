@@ -149,6 +149,7 @@
     .bi-bar-track{flex:1;background:var(--surface2);border-radius:4px;height:12px;overflow:hidden;}
     .bi-bar-fill{background:var(--accent2);height:100%;border-radius:4px;}
     .bi-bar-value{width:36px;font-size:12px;font-weight:700;color:var(--text);text-align:right;flex-shrink:0;}
+    .bi-stat-value{font-size:36px;font-weight:700;color:var(--accent2);font-family:'Syne',sans-serif;}
     @media(max-width:700px){.bi-bar-label{width:120px;}}
 
     @media(max-width:900px){.kpi-grid{grid-template-columns:repeat(2,1fr);}main{padding:16px;}}
@@ -308,7 +309,7 @@
     <div class="logo-icon">📊</div>
     <div class="logo-text">Acordos de <span>Performance</span></div>
   </div>
-  <div class="header-meta">Última atualização: <strong id="last-update">30/07/2026</strong></div>
+  <div class="header-meta">Última atualização: <strong id="last-update">11/08/2026</strong></div>
 <div style="display:flex;align-items:center;gap:10px;"><span id="auth-user-badge" style="display:none;font-size:12px;color:#94a3b8;background:#1e2a44;padding:5px 12px;border-radius:20px;font-family:Syne,sans-serif;"></span><button onclick="authChangePwdOpen()" id="auth-chpwd-btn" style="display:inline-block;background:none;border:1px solid #2d3a5c;color:#94a3b8;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:11px;" title="Alterar senha">🔑</button><button onclick="doLogout()" id="auth-logout-btn" style="display:none;background:#1e2a44;border:1px solid #2d3a5c;color:#e2e8f0;padding:5px 14px;border-radius:6px;cursor:pointer;font-size:12px;">Sair</button></div></header>
 
 <main>
@@ -319,6 +320,9 @@
     </button>
     <button class="tab-btn" onclick="switchTab('meta')" id="tab-btn-meta">
       <span class="tab-icon">&#127919;</span> Atingimento de Meta
+    </button>
+    <button class="tab-btn" onclick="switchTab('spread')" id="tab-btn-spread">
+      <span class="tab-icon">&#129309;</span> Divisão de Spread
     </button>
     <button class="tab-btn" onclick="switchTab('indicadores')" id="tab-btn-indicadores" style="display:none;">
       <span class="tab-icon">&#128202;</span> Indicadores
@@ -414,7 +418,7 @@
       </select>
     </div>
     <div class="filter-actions">
-      <button class="btn btn-primary" onclick="applyFilters()">Filtrar</button>
+      <button class="btn btn-primary" onclick="_trackConsulta();applyFilters()">Filtrar</button>
       <button class="btn btn-ghost"   onclick="clearFilters()">Limpar</button>
     </div>
   </div>
@@ -556,6 +560,77 @@
 
   </div><!-- /tab-meta -->
 
+  <!-- TAB: Divisão de Spread (Negociação de Parceiros Estratégicos) -->
+  <div class="tab-pane" id="tab-spread">
+
+    <div class="kpi-grid" id="spread-kpis">
+      <div class="kpi-card blue">
+        <div class="kpi-label">Parceiros com Negociação</div>
+        <div class="kpi-value" id="spread-kpi-parceiros">—</div>
+        <div class="kpi-sub">total cadastrado</div>
+      </div>
+      <div class="kpi-card amber">
+        <div class="kpi-label">Regras Ativas</div>
+        <div class="kpi-value" id="spread-kpi-regras">—</div>
+        <div class="kpi-sub">total cadastrado</div>
+      </div>
+      <div class="kpi-card green" onclick="spreadFiltrarTipo('Retenção de Spread')" style="cursor:pointer;">
+        <div class="kpi-label">Retenção de Spread</div>
+        <div class="kpi-value" id="spread-kpi-retencao">—</div>
+        <div class="kpi-sub">regras (clique p/ filtrar)</div>
+      </div>
+      <div class="kpi-card red" onclick="spreadFiltrarTipo('Divisão de Spread')" style="cursor:pointer;">
+        <div class="kpi-label">Divisão de Spread</div>
+        <div class="kpi-value" id="spread-kpi-divisao">—</div>
+        <div class="kpi-sub">regras (clique p/ filtrar)</div>
+      </div>
+    </div>
+
+    <!-- BUSCA -->
+    <div class="search-section">
+      <div class="search-title">Busca por Código ou Nome do Parceiro</div>
+      <div class="search-row">
+        <div class="search-input-wrap">
+          <span class="search-icon">🔎</span>
+          <input type="text" id="spread-input" placeholder="Digite o código ou nome do parceiro"
+            oninput="spreadApplyAll()" autocomplete="off"/>
+        </div>
+        <button class="btn btn-danger" onclick="spreadLimpar()">✕ Limpar</button>
+      </div>
+      <div class="search-hint">Negociações especiais de Retenção/Divisão de Spread com parceiros estratégicos — competência de origem: 07/2026.</div>
+    </div>
+
+    <!-- FILTROS -->
+    <div class="filter-bar">
+      <div class="filter-group">
+        <label>Tipo de Regra</label>
+        <select id="spread-filter-tipo" onchange="spreadApplyAll(); spreadHighlightKpi();">
+          <option value="">Todos</option>
+          <option value="Retenção de Spread">Retenção de Spread</option>
+          <option value="Divisão de Spread">Divisão de Spread</option>
+        </select>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-ghost" onclick="spreadLimpar()">Limpar Filtros</button>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title">Divisão de Spread — Negociação de Parceiros Estratégicos</div>
+      <span class="badge active" id="spread-count">&#8212;</span>
+    </div>
+
+    <div class="empty-state" id="spread-empty" style="display:none;">
+      <div class="icon">&#128205;</div>
+      <p>Nenhum parceiro encontrado para esta busca / filtro.</p>
+    </div>
+
+    <div id="spread-results">
+      <div id="spread-cards"></div>
+    </div>
+
+  </div><!-- /tab-spread -->
+
   <!-- TAB: Indicadores (admin) -->
   <div class="tab-pane" id="tab-indicadores">
     <div class="section-header">
@@ -563,9 +638,21 @@
     </div>
 
     <div class="bi-panel">
+      <div class="bi-panel-title">Quantidade de consultas realizadas na plataforma</div>
+      <div class="bi-panel-sub">Total de buscas/filtros aplicados (c&oacute;digo, banco, hierarquia) neste navegador</div>
+      <div class="bi-stat-value" id="bi-consultas-total">0</div>
+    </div>
+
+    <div class="bi-panel">
       <div class="bi-panel-title">Comerciais com mais performance ativa</div>
       <div class="bi-panel-sub">Ranking por quantidade de acordos ativos em Acordos Solicitados</div>
       <div id="bi-ranking-ativos"></div>
+    </div>
+
+    <div class="bi-panel">
+      <div class="bi-panel-title">Parceiros com mais atingimento de meta</div>
+      <div class="bi-panel-sub">Ranking por quantidade de meses com classifica&ccedil;&atilde;o "Atingiu a meta" em Atingimento de Meta</div>
+      <div id="bi-ranking-meta"></div>
     </div>
 
     <div class="bi-panel">
@@ -744,6 +831,15 @@ function lookupHier(cod){
   const n = parseInt(cod,10);
   if(!isNaN(n) && BY_CODIGO_NUM[String(n)]) return BY_CODIGO_NUM[String(n)];
   return null;
+}
+
+// Contador de consultas (buscas/filtros) — só neste navegador, sem backend
+// centralizado não há como somar entre dispositivos diferentes.
+function _getConsultaCount(){
+  return parseInt(localStorage.getItem('hd_consulta_count')||'0',10);
+}
+function _trackConsulta(){
+  localStorage.setItem('hd_consulta_count', String(_getConsultaCount()+1));
 }
 
 /* utilitário: remove o prefixo "código - " de um nome */
@@ -6940,6 +7036,353 @@ const ALL_LEGADO_DATA = LEGADO_JSON.map(function(r){
 /* ══════════════════════════════════════════════════════════
    ESTADO
    ══════════════════════════════════════════════════════════ */
+const SPREAD_JSON = [
+  {"codigo":"101","nome":"SILVA RODRIGUES ASSESSORIA","multiloja":"Não","regras":[
+    {"escopo":"AMIGOZ","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"AMIGOZ - TODOS"}
+  ]},
+  {"codigo":"1403","nome":"WILSON ELIAS CAETANO AMIM LTDA","multiloja":"Sim","regras":[
+    {"escopo":"Todos os bancos","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"TODOS"},
+    {"escopo":"2S CONSIG","tipo":"Retenção de Spread","incluirExcluir":"Excluir","pct":"0,50%","campanhaApenas":"Não","observacao":"TODOS"},
+    {"escopo":"AJUSTE RETROATIVO","tipo":"Retenção de Spread","incluirExcluir":"Excluir","pct":"0,50%","campanhaApenas":"Não","observacao":"TODOS"}
+  ]},
+  {"codigo":"1757","nome":"QUATTRO PROMOTORA LTDA","multiloja":"Não","regras":[
+    {"escopo":"DIGIO","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO DIGIO S.A. - TODOS"}
+  ]},
+  {"codigo":"1968","nome":"ENC APOIO ADMINISTRATIVO E ESTRATEGICO LTDA","multiloja":"Não","regras":[
+    {"escopo":"BANCO QUERO MAIS CRÉDITO","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"85,00%","campanhaApenas":"Não","observacao":"QUERO MAIS CREDITO"},
+    {"escopo":"C6 BANK","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"95,00%","campanhaApenas":"Não","observacao":"BANCO C6 BANK"},
+    {"escopo":"FACTA","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,10%","campanhaApenas":"Não","observacao":"FACTA FINANCEIRA"},
+    {"escopo":"PAN","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"90,00%","campanhaApenas":"Não","observacao":"BANCO PAN (EXCETO: CLT, FGTS e SIAPE)"},
+    {"escopo":"PAN / convênio=CRÉDITO TRABALHADOR","tipo":"Divisão de Spread","incluirExcluir":"Excluir","pct":"90,00%","campanhaApenas":"Não","observacao":"BANCO PAN (EXCETO: CLT, FGTS e SIAPE)"},
+    {"escopo":"PAN / convênio=FEDERAL","tipo":"Divisão de Spread","incluirExcluir":"Excluir","pct":"90,00%","campanhaApenas":"Não","observacao":"BANCO PAN (EXCETO: CLT, FGTS e SIAPE)"},
+    {"escopo":"PAN / convênio=FGTS","tipo":"Divisão de Spread","incluirExcluir":"Excluir","pct":"90,00%","campanhaApenas":"Não","observacao":"BANCO PAN (EXCETO: CLT, FGTS e SIAPE)"}
+  ]},
+  {"codigo":"2182","nome":"DAISY HANNAH RODRIGUES COELHO","multiloja":"Sim","regras":[
+    {"escopo":"BMG","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,70%","campanhaApenas":"Não","observacao":"BANCO BMG - TODOS"},
+    {"escopo":"DAYCOVAL","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,70%","campanhaApenas":"Não","observacao":"BANCO DAYCOVAL - TODOS"}
+  ]},
+  {"codigo":"23138","nome":"SHARON TRINDADE LAUXEN","multiloja":"Não","regras":[
+    {"escopo":"Todos os bancos","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"1,00%","campanhaApenas":"Não","observacao":"TODOS"},
+    {"escopo":"2S CONSIG","tipo":"Retenção de Spread","incluirExcluir":"Excluir","pct":"1,00%","campanhaApenas":"Não","observacao":"TODOS"},
+    {"escopo":"AJUSTE RETROATIVO","tipo":"Retenção de Spread","incluirExcluir":"Excluir","pct":"1,00%","campanhaApenas":"Não","observacao":"TODOS"}
+  ]},
+  {"codigo":"25277","nome":"BRS PROMOTORA DE CREDITO LTDA","multiloja":"Não","regras":[
+    {"escopo":"AMIGOZ","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"AMIGOZ - TODOS"},
+    {"escopo":"SAFRA / convênio=FEDERAL","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"67,00%","campanhaApenas":"Não","observacao":"BANCO SAFRA - GOVERNOS, SIAPE"},
+    {"escopo":"SAFRA / convênio=GOVERNO","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"67,00%","campanhaApenas":"Não","observacao":"BANCO SAFRA - GOVERNOS, SIAPE"}
+  ]},
+  {"codigo":"2779","nome":"G.M.ROCHA INTERMEDIAÇÃO DE NEGÓCIOS LTDA","multiloja":"Sim","regras":[
+    {"escopo":"Todos os bancos","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"85,00%","campanhaApenas":"Não","observacao":"REP 2779    COMERCIAL	1579 (Nome sala: WEPAY 1)"},
+    {"escopo":"2S CONSIG","tipo":"Divisão de Spread","incluirExcluir":"Excluir","pct":"85,00%","campanhaApenas":"Não","observacao":"REP 2779    COMERCIAL	1579 (Nome sala: WEPAY 1)"},
+    {"escopo":"AJUSTE RETROATIVO","tipo":"Divisão de Spread","incluirExcluir":"Excluir","pct":"85,00%","campanhaApenas":"Não","observacao":"REP 2779    COMERCIAL	1579 (Nome sala: WEPAY 1)"}
+  ]},
+  {"codigo":"2831","nome":"N B MIRANDA","multiloja":"Não","regras":[
+    {"escopo":"PRESENÇA BANK / convênio=FEDERAL","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,10%","campanhaApenas":"Não","observacao":"PRESENÇA BANK (FGTS, SIAPE, INSS)"},
+    {"escopo":"PRESENÇA BANK / convênio=FGTS","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,10%","campanhaApenas":"Não","observacao":"PRESENÇA BANK (FGTS, SIAPE, INSS)"},
+    {"escopo":"PRESENÇA BANK / convênio=INSS","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,10%","campanhaApenas":"Não","observacao":"PRESENÇA BANK (FGTS, SIAPE, INSS)"}
+  ]},
+  {"codigo":"2891","nome":"G.M.ROCHA INTERMEDIAÇÃO DE NEGÓCIOS LTDA","multiloja":"Sim","regras":[
+    {"escopo":"Todos os bancos","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"85,00%","campanhaApenas":"Não","observacao":"REP 2891 COMERCIAL 7265 (Nome sala: WEPAY 2 e 2891 - G.M.ROCHA INTERMEDIAÇÃO DE NEGÓCIOS LTDA)"},
+    {"escopo":"2S CONSIG","tipo":"Divisão de Spread","incluirExcluir":"Excluir","pct":"85,00%","campanhaApenas":"Não","observacao":"REP 2891 COMERCIAL 7265 (Nome sala: WEPAY 2 e 2891 - G.M.ROCHA INTERMEDIAÇÃO DE NEGÓCIOS LTDA)"},
+    {"escopo":"AJUSTE RETROATIVO","tipo":"Divisão de Spread","incluirExcluir":"Excluir","pct":"85,00%","campanhaApenas":"Não","observacao":"REP 2891 COMERCIAL 7265 (Nome sala: WEPAY 2 e 2891 - G.M.ROCHA INTERMEDIAÇÃO DE NEGÓCIOS LTDA)"}
+  ]},
+  {"codigo":"29423","nome":"DRCO NEGOCIOS E SERVICOS-LTDA","multiloja":"Não","regras":[
+    {"escopo":"AGORA CONSIG","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"AGORA CONSIG - TODOS"},
+    {"escopo":"AMIGOZ","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"AMIGOZ - TODOS"},
+    {"escopo":"FACTA / convênio=CRÉDITO TRABALHADOR","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"FACTA FINANCEIRA - PREFEITURAS, FORÇAS, FGTS, TRIBUNAIS, CRÉDITO DO TRABALHADOR, SIAPE, GOVERNOS  [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"FACTA / convênio=FEDERAL","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"FACTA FINANCEIRA - PREFEITURAS, FORÇAS, FGTS, TRIBUNAIS, CRÉDITO DO TRABALHADOR, SIAPE, GOVERNOS  [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"FACTA / convênio=FGTS","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"FACTA FINANCEIRA - PREFEITURAS, FORÇAS, FGTS, TRIBUNAIS, CRÉDITO DO TRABALHADOR, SIAPE, GOVERNOS  [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"FACTA / convênio=FORÇAS","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"FACTA FINANCEIRA - PREFEITURAS, FORÇAS, FGTS, TRIBUNAIS, CRÉDITO DO TRABALHADOR, SIAPE, GOVERNOS  [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"FACTA / convênio=GOVERNO","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"FACTA FINANCEIRA - PREFEITURAS, FORÇAS, FGTS, TRIBUNAIS, CRÉDITO DO TRABALHADOR, SIAPE, GOVERNOS  [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"FACTA / convênio=PREFEITURAS","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"FACTA FINANCEIRA - PREFEITURAS, FORÇAS, FGTS, TRIBUNAIS, CRÉDITO DO TRABALHADOR, SIAPE, GOVERNOS  [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"PARANÁ","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO PARANÁ - TODOS"},
+    {"escopo":"PRESENÇA BANK","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"PRESENÇA BANK - TODOS"}
+  ]},
+  {"codigo":"2953","nome":"JACSON ALEXANDRE DOS SANTOS MELO","multiloja":"Não","regras":[
+    {"escopo":"PAN / convênio=INSS","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"70,00%","campanhaApenas":"Não","observacao":"BANCO PAN (INSS)"}
+  ]},
+  {"codigo":"31583","nome":"45.769.482 FERNANDA MARTINS MIRANDA MARCIANO","multiloja":"Sim","regras":[
+    {"escopo":"DAYCOVAL","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO DAYCOVAL - TODOS"},
+    {"escopo":"DIGIO","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO DIGIO S.A. - TODOS"}
+  ]},
+  {"codigo":"3225","nome":"ALEXANDRE OLIVEIRA MATOS","multiloja":"Não","regras":[
+    {"escopo":"Todos os bancos","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,30%","campanhaApenas":"Não","observacao":"TODOS / 0,40% CLT (C6) e o restante 0,30%"},
+    {"escopo":"2S CONSIG","tipo":"Retenção de Spread","incluirExcluir":"Excluir","pct":"0,30%","campanhaApenas":"Não","observacao":"TODOS / 0,40% CLT (C6) e o restante 0,30%"},
+    {"escopo":"AJUSTE RETROATIVO","tipo":"Retenção de Spread","incluirExcluir":"Excluir","pct":"0,30%","campanhaApenas":"Não","observacao":"TODOS / 0,40% CLT (C6) e o restante 0,30%"},
+    {"escopo":"C6 BANK / convênio=CRÉDITO TRABALHADOR","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,10%","campanhaApenas":"Não","observacao":"TODOS / 0,40% CLT (C6) e o restante 0,30% [Devido novo formato da base do spread, o percentual fica 0,10% pois soma com o percentual de cima]"}
+  ]},
+  {"codigo":"3768","nome":"J SAAD SEOUD INFORMACOES CADASTRAIS","multiloja":"Sim","regras":[
+    {"escopo":"Todos os bancos","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"85,00%","campanhaApenas":"Não","observacao":"TODOS"},
+    {"escopo":"2S CONSIG","tipo":"Divisão de Spread","incluirExcluir":"Excluir","pct":"85,00%","campanhaApenas":"Não","observacao":"TODOS"},
+    {"escopo":"AJUSTE RETROATIVO","tipo":"Divisão de Spread","incluirExcluir":"Excluir","pct":"85,00%","campanhaApenas":"Não","observacao":"TODOS"}
+  ]},
+  {"codigo":"38173","nome":"RENNOVA PROMOTORA LTDA","multiloja":"Não","regras":[
+    {"escopo":"C6 BANK","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,30%","campanhaApenas":"Não","observacao":"BANCO C6 BANK - TODOS"},
+    {"escopo":"FACTA","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,30%","campanhaApenas":"Não","observacao":"FACTA FINANCEIRA - TODOS"}
+  ]},
+  {"codigo":"39295","nome":"MP + CREDITO","multiloja":"Não","regras":[
+    {"escopo":"AMIGOZ","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"AMIGOZ (TODOS)"},
+    {"escopo":"BANRISUL","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO BANRISUL (TODOS)"},
+    {"escopo":"BMG","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO BMG (TODOS)"},
+    {"escopo":"BRB","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BRB - CRÉDITO, FINANCIAMENTO E INVESTIMENTO (TODOS)"},
+    {"escopo":"C6 BANK","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO C6 BANK (TODOS)"},
+    {"escopo":"DAYCOVAL","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO DAYCOVAL"},
+    {"escopo":"DIGIO","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO DIGIO S.A. (TODOS)"},
+    {"escopo":"FACTA","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"FACTA FINANCEIRA (TODOS)"},
+    {"escopo":"FUTURO PREVIDÊNCIA","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"FUTURO PREVIDÊNCIA"},
+    {"escopo":"MERCANTIL","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO MERCANTIL DO BRASIL (TODOS)"},
+    {"escopo":"MEU CASHCARD","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"MEU CASHCARD (TODOS)"},
+    {"escopo":"PAN","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO PAN (TODOS)"},
+    {"escopo":"SAFRA","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO SAFRA (TODOS)"},
+    {"escopo":"SANTANDER FVE","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO SANTANDER (TODOS)"}
+  ]},
+  {"codigo":"4107","nome":"KONSI APP SERVIÇOS DE CADASTRO","multiloja":"Não","regras":[
+    {"escopo":"C6 BANK","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"50,00%","campanhaApenas":"Não","observacao":"BANCO C6 BANK"}
+  ]},
+  {"codigo":"4179","nome":"EJ SERVICOS DE CORRESPONDENTES DE INSTITUICOES FINANCEIRAS LTDA","multiloja":"Não","regras":[
+    {"escopo":"C6 BANK","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO C6 BANK"}
+  ]},
+  {"codigo":"43206","nome":"LEANDRO GARCIA PEREIRA","multiloja":"Sim","regras":[
+    {"escopo":"Todos os bancos","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"TODOS - TODOS"},
+    {"escopo":"2S CONSIG","tipo":"Retenção de Spread","incluirExcluir":"Excluir","pct":"0,50%","campanhaApenas":"Não","observacao":"TODOS - TODOS"},
+    {"escopo":"AJUSTE RETROATIVO","tipo":"Retenção de Spread","incluirExcluir":"Excluir","pct":"0,50%","campanhaApenas":"Não","observacao":"TODOS - TODOS"}
+  ]},
+  {"codigo":"43506","nome":"NOVA LEV INTERMEDIACAO DE NEGOCIOS LTDA","multiloja":"Não","regras":[
+    {"escopo":"HAPPY CONSIG","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"100,00%","campanhaApenas":"Não","observacao":"E-mail: \"Re: [Externo] MIGRAÇÃO CÓDIGO BYX\""}
+  ]},
+  {"codigo":"43644","nome":"LELES INTERMEDIAÇÕES DE NEGOCIOS ADMNISTRATIVOS LTDA","multiloja":"Sim","regras":[
+    {"escopo":"Todos os bancos","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"70,00%","campanhaApenas":"Não","observacao":"Deduzir custo usuários storm (via exportação colabs, usuários ativos coluna status sistema, externo 7,50 por usuário e interno 85,00 por usuário)  + SEGUROS"},
+    {"escopo":"2S CONSIG","tipo":"Divisão de Spread","incluirExcluir":"Excluir","pct":"70,00%","campanhaApenas":"Não","observacao":"Deduzir custo usuários storm (via exportação colabs, usuários ativos coluna status sistema, externo 7,50 por usuário e interno 85,00 por usuário)  + SEGUROS"},
+    {"escopo":"AJUSTE RETROATIVO","tipo":"Divisão de Spread","incluirExcluir":"Excluir","pct":"70,00%","campanhaApenas":"Não","observacao":"Deduzir custo usuários storm (via exportação colabs, usuários ativos coluna status sistema, externo 7,50 por usuário e interno 85,00 por usuário)  + SEGUROS"}
+  ]},
+  {"codigo":"45292","nome":"WILSON ELIAS CAETANO AMIM CONSULTORIA E CRÉDITO","multiloja":"Sim","regras":[
+    {"escopo":"Todos os bancos","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"TODOS"},
+    {"escopo":"2S CONSIG","tipo":"Retenção de Spread","incluirExcluir":"Excluir","pct":"0,50%","campanhaApenas":"Não","observacao":"TODOS"},
+    {"escopo":"AJUSTE RETROATIVO","tipo":"Retenção de Spread","incluirExcluir":"Excluir","pct":"0,50%","campanhaApenas":"Não","observacao":"TODOS"}
+  ]},
+  {"codigo":"522","nome":"PRIMME PROMOTORA LTDA","multiloja":"Não","regras":[
+    {"escopo":"DIGIO","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO DIGIO S.A. - TODOS"}
+  ]},
+  {"codigo":"5517","nome":"MASTER CALL CENTER LTDA","multiloja":"Não","regras":[
+    {"escopo":"DAYCOVAL","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"2,50%","campanhaApenas":"Não","observacao":"BANCO DAYCOVAL - TODOS"}
+  ]},
+  {"codigo":"55547","nome":"HELEN SANTOS ASSUNCAO DA SILVA ARAUJO","multiloja":"Não","regras":[
+    {"escopo":"C6 BANK / convênio=CRÉDITO TRABALHADOR","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,38%","campanhaApenas":"Não","observacao":"BANCO C6 BANK (CRÉDITO DO TRABALHADOR)"},
+    {"escopo":"C6 BANK / convênio=FEDERAL","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO C6 BANK (SIAPE)"},
+    {"escopo":"C6 BANK / convênio=INSS","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,38%","campanhaApenas":"Não","observacao":"BANCO C6 BANK (INSS)"},
+    {"escopo":"PAN / convênio=GOVERNO","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,40%","campanhaApenas":"Não","observacao":"BANCO PAN (PREFEITURAS, TRIBUNAIS, GOVERNOS)  [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"PAN / convênio=INSS","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,36%","campanhaApenas":"Não","observacao":"BANCO PAN (INSS)"},
+    {"escopo":"PAN / convênio=PREFEITURAS","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,40%","campanhaApenas":"Não","observacao":"BANCO PAN (PREFEITURAS, TRIBUNAIS, GOVERNOS)  [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"}
+  ]},
+  {"codigo":"5650","nome":"ELAINE FERNANDA WITKOSKI","multiloja":"Não","regras":[
+    {"escopo":"Todos os bancos","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"70,00%","campanhaApenas":"Não","observacao":"TODOS"},
+    {"escopo":"2S CONSIG","tipo":"Divisão de Spread","incluirExcluir":"Excluir","pct":"70,00%","campanhaApenas":"Não","observacao":"TODOS"},
+    {"escopo":"AJUSTE RETROATIVO","tipo":"Divisão de Spread","incluirExcluir":"Excluir","pct":"70,00%","campanhaApenas":"Não","observacao":"TODOS"}
+  ]},
+  {"codigo":"5742","nome":"NBM COMERCIO E SERVIÇOS LTDA","multiloja":"Não","regras":[
+    {"escopo":"BANCO QUERO MAIS CRÉDITO","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"100,00%","campanhaApenas":"Não","observacao":"BANCO QUERO MAIS CRÉDITO (Capital Consig)"}
+  ]},
+  {"codigo":"6039","nome":"GCMATOS PROMOTORA LTDA","multiloja":"Não","regras":[
+    {"escopo":"FINANTO BANK","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"50,00%","campanhaApenas":"Não","observacao":"FINANTO BANK"}
+  ]},
+  {"codigo":"6063","nome":"AVALIZA CRÉDITOS","multiloja":"Não","regras":[
+    {"escopo":"BMG / convênio=INSS","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"1,30%","campanhaApenas":"Não","observacao":"BANCO BMG - INSS"},
+    {"escopo":"C6 BANK / convênio=INSS","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"1,30%","campanhaApenas":"Não","observacao":"BANCO C6 BANK - INSS"}
+  ]},
+  {"codigo":"6302","nome":"NEXTT PROMOTORA LTDA","multiloja":"Sim","regras":[
+    {"escopo":"Todos os bancos","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"80,00%","campanhaApenas":"Não","observacao":"deduzir seguro too e + analitico e repasse carteira de seguro + deduzir custo usuários storm (via exportação colabs, usuários ativos coluna status sistema, externo 7,50 por usuário e interno 85,00 por usuário)"},
+    {"escopo":"2S CONSIG","tipo":"Divisão de Spread","incluirExcluir":"Excluir","pct":"80,00%","campanhaApenas":"Não","observacao":"deduzir seguro too e + analitico e repasse carteira de seguro + deduzir custo usuários storm (via exportação colabs, usuários ativos coluna status sistema, externo 7,50 por usuário e interno 85,00 por usuário)"},
+    {"escopo":"AJUSTE RETROATIVO","tipo":"Divisão de Spread","incluirExcluir":"Excluir","pct":"80,00%","campanhaApenas":"Não","observacao":"deduzir seguro too e + analitico e repasse carteira de seguro + deduzir custo usuários storm (via exportação colabs, usuários ativos coluna status sistema, externo 7,50 por usuário e interno 85,00 por usuário)"}
+  ]},
+  {"codigo":"65058","nome":"CONTA CHEIA TECNOLOGIA LTDA","multiloja":"Não","regras":[
+    {"escopo":"C6 BANK / convênio=CRÉDITO TRABALHADOR","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO C6 BANK - CRÉDITO TRABALHADOR"},
+    {"escopo":"MERCANTIL / convênio=CRÉDITO TRABALHADOR","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BIMESTRAL (O analítico será enviado de maneira bimestral, conforme a campanha do banco, mas o fechamento deverá ser mensal para desconto no spread)"}
+  ]},
+  {"codigo":"6510","nome":"CREDPARCEIRO ASSESSORIA DE CREDITO LTDA","multiloja":"Não","regras":[
+    {"escopo":"C6 BANK / convênio=INSS","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"100,00%","campanhaApenas":"Não","observacao":"BANCO C6 BANK (INSS)"},
+    {"escopo":"FACTA / convênio=FGTS","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"100,00%","campanhaApenas":"Não","observacao":"FACTA FINANCEIRA (INSS, FGTS)"},
+    {"escopo":"FACTA / convênio=INSS","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"100,00%","campanhaApenas":"Não","observacao":"FACTA FINANCEIRA (INSS, FGTS)"}
+  ]},
+  {"codigo":"654","nome":"LUCAS PAVLAK","multiloja":"Não","regras":[
+    {"escopo":"BMG / convênio=FEDERAL","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"50,00%","campanhaApenas":"Não","observacao":"BANCO BMG - GOVERNOS, FORÇAS, TRIBUNAIS, PREFEITURAS, SIAPE [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"BMG / convênio=FORÇAS","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"50,00%","campanhaApenas":"Não","observacao":"BANCO BMG - GOVERNOS, FORÇAS, TRIBUNAIS, PREFEITURAS, SIAPE [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"BMG / convênio=GOVERNO","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"50,00%","campanhaApenas":"Não","observacao":"BANCO BMG - GOVERNOS, FORÇAS, TRIBUNAIS, PREFEITURAS, SIAPE [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"BMG / convênio=PREFEITURAS","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"50,00%","campanhaApenas":"Não","observacao":"BANCO BMG - GOVERNOS, FORÇAS, TRIBUNAIS, PREFEITURAS, SIAPE [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"PAN / convênio=FEDERAL","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"50,00%","campanhaApenas":"Não","observacao":"BANCO PAN - GOVERNOS, TRIBUNAIS, SIAPE, PREFEITURAS, FORÇAS"},
+    {"escopo":"PAN / convênio=FORÇAS","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"50,00%","campanhaApenas":"Não","observacao":"BANCO PAN - GOVERNOS, TRIBUNAIS, SIAPE, PREFEITURAS, FORÇAS"},
+    {"escopo":"PAN / convênio=GOVERNO","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"50,00%","campanhaApenas":"Não","observacao":"BANCO PAN - GOVERNOS, TRIBUNAIS, SIAPE, PREFEITURAS, FORÇAS"},
+    {"escopo":"PAN / convênio=PREFEITURAS","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"50,00%","campanhaApenas":"Não","observacao":"BANCO PAN - GOVERNOS, TRIBUNAIS, SIAPE, PREFEITURAS, FORÇAS"},
+    {"escopo":"SAFRA / convênio=FEDERAL","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"50,00%","campanhaApenas":"Não","observacao":"BANCO SAFRA - FORÇAS, PREFEITURAS, GOVERNOS, TRIBUNAIS, SIAPE [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"SAFRA / convênio=FORÇAS","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"50,00%","campanhaApenas":"Não","observacao":"BANCO SAFRA - FORÇAS, PREFEITURAS, GOVERNOS, TRIBUNAIS, SIAPE [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"SAFRA / convênio=GOVERNO","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"50,00%","campanhaApenas":"Não","observacao":"BANCO SAFRA - FORÇAS, PREFEITURAS, GOVERNOS, TRIBUNAIS, SIAPE [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"SAFRA / convênio=PREFEITURAS","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"50,00%","campanhaApenas":"Não","observacao":"BANCO SAFRA - FORÇAS, PREFEITURAS, GOVERNOS, TRIBUNAIS, SIAPE [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"}
+  ]},
+  {"codigo":"65547","nome":"RA DA SILVA PROMOTORA DE VENDAS","multiloja":"Não","regras":[
+    {"escopo":"DIGIO","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,65%","campanhaApenas":"Não","observacao":"BANCO DIGIO S.A. - TODOS"},
+    {"escopo":"SAFRA","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,65%","campanhaApenas":"Não","observacao":"BANCO SAFRA - TODOS"}
+  ]},
+  {"codigo":"6806","nome":"TOTEM SERVICOS E CADASTROS LTDA","multiloja":"Não","regras":[
+    {"escopo":"AMIGOZ","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,25%","campanhaApenas":"Não","observacao":"AMIGOZ"},
+    {"escopo":"BMG","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"80,00%","campanhaApenas":"Não","observacao":"BANCO BMG"},
+    {"escopo":"DAYCOVAL","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO DAYCOVAL"},
+    {"escopo":"PAN / convênio=GOVERNO","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,20%","campanhaApenas":"Não","observacao":"BANCO PAN (PREFEITURAS, GOVERNOS)"},
+    {"escopo":"PAN / convênio=PREFEITURAS","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,20%","campanhaApenas":"Não","observacao":"BANCO PAN (PREFEITURAS, GOVERNOS)"}
+  ]},
+  {"codigo":"72424","nome":"(nome não encontrado)","multiloja":"Não","regras":[
+    {"escopo":"C6 BANK / convênio=CRÉDITO TRABALHADOR","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO C6 BANK - CRÉDITO DO TRABALHADOR"},
+    {"escopo":"PAN / convênio=CRÉDITO TRABALHADOR","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,60%","campanhaApenas":"Não","observacao":"BANCO PAN - CRÉDITO DO TRABALHADOR"}
+  ]},
+  {"codigo":"7289","nome":"INVISTA PROMOTORA LTDA","multiloja":"Sim","regras":[
+    {"escopo":"AMIGOZ","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"1,00%","campanhaApenas":"Não","observacao":"AMIGOZ - TODOS"},
+    {"escopo":"BMG / convênio=FEDERAL","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO BMG (GOVERNOS, SIAPE, PREFEITURAS, TRIBUNAIS)  [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"BMG / convênio=GOVERNO","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO BMG (GOVERNOS, SIAPE, PREFEITURAS, TRIBUNAIS)  [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"BMG / convênio=PREFEITURAS","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO BMG (GOVERNOS, SIAPE, PREFEITURAS, TRIBUNAIS)  [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"C6 BANK / convênio=INSS","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO C6 BANK - INSS"},
+    {"escopo":"DAYCOVAL / convênio=GOVERNO","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO DAYCOVAL (TRIBUNAIS, PREFEITURAS, GOVERNOS)  [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"DAYCOVAL / convênio=PREFEITURAS","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO DAYCOVAL (TRIBUNAIS, PREFEITURAS, GOVERNOS)  [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"DIGIO / convênio=GOVERNO","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO DIGIO S.A. (TRIBUNAIS, PREFEITURAS, GOVERNOS)  [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"DIGIO / convênio=PREFEITURAS","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO DIGIO S.A. (TRIBUNAIS, PREFEITURAS, GOVERNOS)  [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"FUTURO PREVIDÊNCIA / convênio=GOVERNO","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"FUTURO PREVIDÊNCIA (GOVERNOS, PREFEITURAS)"},
+    {"escopo":"FUTURO PREVIDÊNCIA / convênio=PREFEITURAS","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"FUTURO PREVIDÊNCIA (GOVERNOS, PREFEITURAS)"},
+    {"escopo":"PAN / convênio=GOVERNO","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO PAN (TRIBUNAIS, PREFEITURAS, GOVERNOS)  [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"PAN / convênio=PREFEITURAS","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO PAN (TRIBUNAIS, PREFEITURAS, GOVERNOS)  [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"PEGCARD","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"1,00%","campanhaApenas":"Não","observacao":"PEGCARD - TODOS"},
+    {"escopo":"SAFRA / convênio=FEDERAL","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO SAFRA (GOVERNOS, SIAPE, PREFEITURAS, TRIBUNAIS)  [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"SAFRA / convênio=GOVERNO","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO SAFRA (GOVERNOS, SIAPE, PREFEITURAS, TRIBUNAIS)  [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"SAFRA / convênio=PREFEITURAS","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO SAFRA (GOVERNOS, SIAPE, PREFEITURAS, TRIBUNAIS)  [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"}
+  ]},
+  {"codigo":"7455","nome":"SMARTCRED","multiloja":"Não","regras":[
+    {"escopo":"FINANTO BANK","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"50,00%","campanhaApenas":"Não","observacao":"FINANTO BANK"}
+  ]},
+  {"codigo":"7650","nome":"PADARIA N. S. DO CARMO DO JD. MUGNAINI LTDA.","multiloja":"Sim","regras":[
+    {"escopo":"Todos os bancos","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"1,20%","campanhaApenas":"Não","observacao":"TODOS - TODOS"},
+    {"escopo":"2S CONSIG","tipo":"Retenção de Spread","incluirExcluir":"Excluir","pct":"1,20%","campanhaApenas":"Não","observacao":"TODOS - TODOS"},
+    {"escopo":"AJUSTE RETROATIVO","tipo":"Retenção de Spread","incluirExcluir":"Excluir","pct":"1,20%","campanhaApenas":"Não","observacao":"TODOS - TODOS"}
+  ]},
+  {"codigo":"7724","nome":"MASFON SERVIÇOS DE CADASTRO LTDA","multiloja":"Não","regras":[
+    {"escopo":"BANCO QUERO MAIS CRÉDITO","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"50,00%","campanhaApenas":"Não","observacao":"QUERO MAIS CREDITO"},
+    {"escopo":"BMG","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"80,00%","campanhaApenas":"Não","observacao":"BANCO BMG (EXCETO INSS, CLT, FGTS, SIAPE)"},
+    {"escopo":"BMG / convênio=CRÉDITO TRABALHADOR","tipo":"Divisão de Spread","incluirExcluir":"Excluir","pct":"80,00%","campanhaApenas":"Não","observacao":"BANCO BMG (EXCETO INSS, CLT, FGTS, SIAPE)"},
+    {"escopo":"BMG / convênio=FEDERAL","tipo":"Divisão de Spread","incluirExcluir":"Excluir","pct":"80,00%","campanhaApenas":"Não","observacao":"BANCO BMG (EXCETO INSS, CLT, FGTS, SIAPE)"},
+    {"escopo":"BMG / convênio=FGTS","tipo":"Divisão de Spread","incluirExcluir":"Excluir","pct":"80,00%","campanhaApenas":"Não","observacao":"BANCO BMG (EXCETO INSS, CLT, FGTS, SIAPE)"},
+    {"escopo":"BMG / convênio=INSS","tipo":"Divisão de Spread","incluirExcluir":"Excluir","pct":"80,00%","campanhaApenas":"Não","observacao":"BANCO BMG (EXCETO INSS, CLT, FGTS, SIAPE)"}
+  ]},
+  {"codigo":"8318","nome":"PEGG LTDA","multiloja":"Não","regras":[
+    {"escopo":"C6 BANK / convênio=INSS","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO C6 BANK (INSS)"},
+    {"escopo":"FACTA / convênio=INSS","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"100,00%","campanhaApenas":"Não","observacao":"FACTA FINANCEIRA (INSS)"}
+  ]},
+  {"codigo":"83297","nome":"VAZ DE LIMA, OLIVEIRA & CIA LTDA","multiloja":"Não","regras":[
+    {"escopo":"Todos os bancos","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"TODOS - TODOS"},
+    {"escopo":"2S CONSIG","tipo":"Retenção de Spread","incluirExcluir":"Excluir","pct":"0,50%","campanhaApenas":"Não","observacao":"TODOS - TODOS"},
+    {"escopo":"AJUSTE RETROATIVO","tipo":"Retenção de Spread","incluirExcluir":"Excluir","pct":"0,50%","campanhaApenas":"Não","observacao":"TODOS - TODOS"}
+  ]},
+  {"codigo":"88012","nome":"(nome não encontrado)","multiloja":"Não","regras":[
+    {"escopo":"Todos os bancos","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"TODOS - TODOS"},
+    {"escopo":"2S CONSIG","tipo":"Retenção de Spread","incluirExcluir":"Excluir","pct":"0,50%","campanhaApenas":"Não","observacao":"TODOS - TODOS"},
+    {"escopo":"AJUSTE RETROATIVO","tipo":"Retenção de Spread","incluirExcluir":"Excluir","pct":"0,50%","campanhaApenas":"Não","observacao":"TODOS - TODOS"}
+  ]},
+  {"codigo":"8818","nome":"SOARES ATIVIDADES DE COBRANÇAS LTDA ME","multiloja":"Não","regras":[
+    {"escopo":"AGORA CONSIG","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"AGORA CONSIG - TODOS"},
+    {"escopo":"AGORA CONSIG","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"AGORA CONSIG - TODOS"},
+    {"escopo":"AMIGOZ","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"AMIGOZ - TODOS"},
+    {"escopo":"C6 BANK","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO C6 BANK - TODOS"},
+    {"escopo":"DAYCOVAL","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"50,00%","campanhaApenas":"Não","observacao":"BANCO DAYCOVAL"},
+    {"escopo":"ICRED","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"ICRED FINANCEIRA - TODOS"},
+    {"escopo":"MERCANTIL","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO MERCANTIL DO BRASIL - TODOS"},
+    {"escopo":"PAN","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO PAN - TODOS"},
+    {"escopo":"PARANÁ","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO PARANÁ - TODOS"},
+    {"escopo":"SAFRA","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO SAFRA - TODOS"}
+  ]},
+  {"codigo":"8849","nome":"53.350.994 KELEN CONCEICAO DUARTE","multiloja":"Não","regras":[
+    {"escopo":"AMIGOZ","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"1,00%","campanhaApenas":"Não","observacao":"AMIGOZ - TODOS"},
+    {"escopo":"BMG / convênio=GOVERNO","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO BMG (TRIBUNAIS, GOVERNOS, PREFEITURAS)  [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"BMG / convênio=PREFEITURAS","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO BMG (TRIBUNAIS, GOVERNOS, PREFEITURAS)  [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"PEGCARD","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"1,00%","campanhaApenas":"Não","observacao":"PEGCARD - TODOS"}
+  ]},
+  {"codigo":"88957","nome":"53.925.950 LEONARDO SERRANO BARBAROTTI","multiloja":"Sim","regras":[
+    {"escopo":"Todos os bancos","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"50,00%","campanhaApenas":"Não","observacao":"TODOS"},
+    {"escopo":"2S CONSIG","tipo":"Divisão de Spread","incluirExcluir":"Excluir","pct":"50,00%","campanhaApenas":"Não","observacao":"TODOS"},
+    {"escopo":"AJUSTE RETROATIVO","tipo":"Divisão de Spread","incluirExcluir":"Excluir","pct":"50,00%","campanhaApenas":"Não","observacao":"TODOS"}
+  ]},
+  {"codigo":"8913","nome":"40267154 LIVIA PEREIRA DUARTE","multiloja":"Não","regras":[
+    {"escopo":"AMIGOZ","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"1,00%","campanhaApenas":"Não","observacao":"AMIGOZ - TODOS"},
+    {"escopo":"BMG / convênio=GOVERNO","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO BMG (TRIBUNAIS, PREFEITURAS, GOVERNOS)  [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"BMG / convênio=PREFEITURAS","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO BMG (TRIBUNAIS, PREFEITURAS, GOVERNOS)  [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"DAYCOVAL / convênio=GOVERNO","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO DAYCOVAL (TRIBUNAIS, PREFEITURAS, GOVERNOS)  [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"DAYCOVAL / convênio=PREFEITURAS","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO DAYCOVAL (TRIBUNAIS, PREFEITURAS, GOVERNOS)  [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"DIGIO / convênio=GOVERNO","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO DIGIO S.A. (TRIBUNAIS, PREFEITURAS, GOVERNOS)  [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"DIGIO / convênio=PREFEITURAS","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO DIGIO S.A. (TRIBUNAIS, PREFEITURAS, GOVERNOS)  [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"PAN / convênio=GOVERNO","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,20%","campanhaApenas":"Não","observacao":"BANCO PAN (TRIBUNAIS, PREFEITURAS, GOVERNOS)  [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"PAN / convênio=PREFEITURAS","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,20%","campanhaApenas":"Não","observacao":"BANCO PAN (TRIBUNAIS, PREFEITURAS, GOVERNOS)  [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"PEGCARD","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"1,00%","campanhaApenas":"Não","observacao":"PEGCARD - TODOS"},
+    {"escopo":"SAFRA","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO SAFRA - TODOS"}
+  ]},
+  {"codigo":"8941","nome":"BRUNA CÉLIA GONÇALVES ARAÚJO DE AGUIAR","multiloja":"Não","regras":[
+    {"escopo":"AMIGOZ / convênio=FEDERAL","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"1,00%","campanhaApenas":"Não","observacao":"AMIGOZ - PREFEITURAS, INSS, SIAPE, GOVERNOS, TRIBUNAIS, FORÇAS [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"AMIGOZ / convênio=FORÇAS","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"1,00%","campanhaApenas":"Não","observacao":"AMIGOZ - PREFEITURAS, INSS, SIAPE, GOVERNOS, TRIBUNAIS, FORÇAS [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"AMIGOZ / convênio=GOVERNO","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"1,00%","campanhaApenas":"Não","observacao":"AMIGOZ - PREFEITURAS, INSS, SIAPE, GOVERNOS, TRIBUNAIS, FORÇAS [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"AMIGOZ / convênio=INSS","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"1,00%","campanhaApenas":"Não","observacao":"AMIGOZ - PREFEITURAS, INSS, SIAPE, GOVERNOS, TRIBUNAIS, FORÇAS [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"AMIGOZ / convênio=PREFEITURAS","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"1,00%","campanhaApenas":"Não","observacao":"AMIGOZ - PREFEITURAS, INSS, SIAPE, GOVERNOS, TRIBUNAIS, FORÇAS [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"DIGIO / convênio=FEDERAL","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,20%","campanhaApenas":"Não","observacao":"BANCO DIGIO S.A. - TRIBUNAIS, GOVERNOS, INSS, SIAPE, FORÇAS, PREFEITURAS [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"DIGIO / convênio=FORÇAS","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,20%","campanhaApenas":"Não","observacao":"BANCO DIGIO S.A. - TRIBUNAIS, GOVERNOS, INSS, SIAPE, FORÇAS, PREFEITURAS [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"DIGIO / convênio=GOVERNO","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,20%","campanhaApenas":"Não","observacao":"BANCO DIGIO S.A. - TRIBUNAIS, GOVERNOS, INSS, SIAPE, FORÇAS, PREFEITURAS [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"DIGIO / convênio=INSS","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,20%","campanhaApenas":"Não","observacao":"BANCO DIGIO S.A. - TRIBUNAIS, GOVERNOS, INSS, SIAPE, FORÇAS, PREFEITURAS [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"},
+    {"escopo":"DIGIO / convênio=PREFEITURAS","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,20%","campanhaApenas":"Não","observacao":"BANCO DIGIO S.A. - TRIBUNAIS, GOVERNOS, INSS, SIAPE, FORÇAS, PREFEITURAS [NECESSÁRIO REMOVER \"TRIBUNAIS\" pois no SPREAD TJ está dentro da chave GOVERNO]"}
+  ]},
+  {"codigo":"9009","nome":"ERALDO APARECIDO DO BOMFIM","multiloja":"Sim","regras":[
+    {"escopo":"Todos os bancos","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"50,00%","campanhaApenas":"Sim","observacao":"SB GRADE repassar 100% + FACTA FINANCEIRA recebe somente a grade pois o restante e repassado via bonus sub facta (no momento recebe tudo da Facta) [ALÉM DE USAR O CÓD 9009 NA SALA PRA PEGAR OS CÓDIGOS DE MULTI, UTILIZAR O CÓDIGO DO REG 769 NA EXP COLAB PRA PEGAR OS CÓDIGOS]"},
+    {"escopo":"2S CONSIG","tipo":"Divisão de Spread","incluirExcluir":"Excluir","pct":"50,00%","campanhaApenas":"Sim","observacao":"SB GRADE repassar 100% + FACTA FINANCEIRA recebe somente a grade pois o restante e repassado via bonus sub facta (no momento recebe tudo da Facta) [ALÉM DE USAR O CÓD 9009 NA SALA PRA PEGAR OS CÓDIGOS DE MULTI, UTILIZAR O CÓDIGO DO REG 769 NA EXP COLAB PRA PEGAR OS CÓDIGOS]"},
+    {"escopo":"AJUSTE RETROATIVO","tipo":"Divisão de Spread","incluirExcluir":"Excluir","pct":"50,00%","campanhaApenas":"Sim","observacao":"SB GRADE repassar 100% + FACTA FINANCEIRA recebe somente a grade pois o restante e repassado via bonus sub facta (no momento recebe tudo da Facta) [ALÉM DE USAR O CÓD 9009 NA SALA PRA PEGAR OS CÓDIGOS DE MULTI, UTILIZAR O CÓDIGO DO REG 769 NA EXP COLAB PRA PEGAR OS CÓDIGOS]"}
+  ]},
+  {"codigo":"9139","nome":"","multiloja":"Não","regras":[
+    {"escopo":"Todos os bancos","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"1,00%","campanhaApenas":"Não","observacao":"TODOS"},
+    {"escopo":"2S CONSIG","tipo":"Retenção de Spread","incluirExcluir":"Excluir","pct":"1,00%","campanhaApenas":"Não","observacao":"TODOS"},
+    {"escopo":"AJUSTE RETROATIVO","tipo":"Retenção de Spread","incluirExcluir":"Excluir","pct":"1,00%","campanhaApenas":"Não","observacao":"TODOS"}
+  ]},
+  {"codigo":"91888","nome":"JMO SERVIÇOS DE PREPARAÇÃO DE DOCUMENTOS LTDA","multiloja":"Não","regras":[
+    {"escopo":"FINANTO BANK","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"85,00%","campanhaApenas":"Não","observacao":"FINANTO BANK"}
+  ]},
+  {"codigo":"9326","nome":"OIKOS SOLUCOES FINANCEIRAS","multiloja":"Não","regras":[
+    {"escopo":"DAYCOVAL","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"50,00%","campanhaApenas":"Não","observacao":"BANCO DAYCOVAL"}
+  ]},
+  {"codigo":"95","nome":"FG LOTERIO COBRANCAS LTDA","multiloja":"Sim","regras":[
+    {"escopo":"Todos os bancos","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"1,30%","campanhaApenas":"Não","observacao":"TODOS - TODOS"},
+    {"escopo":"2S CONSIG","tipo":"Retenção de Spread","incluirExcluir":"Excluir","pct":"1,30%","campanhaApenas":"Não","observacao":"TODOS - TODOS"},
+    {"escopo":"AJUSTE RETROATIVO","tipo":"Retenção de Spread","incluirExcluir":"Excluir","pct":"1,30%","campanhaApenas":"Não","observacao":"TODOS - TODOS"}
+  ]},
+  {"codigo":"9516","nome":"N1 PROMOTORA","multiloja":"Não","regras":[
+    {"escopo":"Todos os bancos","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"100,00%","campanhaApenas":"Não","observacao":"1"},
+    {"escopo":"2S CONSIG","tipo":"Divisão de Spread","incluirExcluir":"Excluir","pct":"100,00%","campanhaApenas":"Não","observacao":"1"},
+    {"escopo":"AJUSTE RETROATIVO","tipo":"Divisão de Spread","incluirExcluir":"Excluir","pct":"100,00%","campanhaApenas":"Não","observacao":"1"}
+  ]},
+  {"codigo":"9669","nome":"MGV LOCACOES E ASSESSORIA DE SERVICOS CADASTRAIS LTDA","multiloja":"Não","regras":[
+    {"escopo":"AMIGOZ","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"70,00%","campanhaApenas":"Não","observacao":"AMIGOZ"},
+    {"escopo":"C6 BANK / convênio=CRÉDITO TRABALHADOR","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"50,00%","campanhaApenas":"Não","observacao":"BANCO C6 BANK (INSS, CLT)"},
+    {"escopo":"C6 BANK / convênio=INSS","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"50,00%","campanhaApenas":"Não","observacao":"BANCO C6 BANK (INSS, CLT)"},
+    {"escopo":"FACTA","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"70,00%","campanhaApenas":"Não","observacao":"FACTA FINANCEIRA"}
+  ]},
+  {"codigo":"9836","nome":"MAIS AGIL FRANQUIAS S/A","multiloja":"Não","regras":[
+    {"escopo":"Todos os bancos","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"50,00%","campanhaApenas":"Não","observacao":"TODOS"},
+    {"escopo":"2S CONSIG","tipo":"Divisão de Spread","incluirExcluir":"Excluir","pct":"50,00%","campanhaApenas":"Não","observacao":"TODOS"},
+    {"escopo":"AJUSTE RETROATIVO","tipo":"Divisão de Spread","incluirExcluir":"Excluir","pct":"50,00%","campanhaApenas":"Não","observacao":"TODOS"}
+  ]},
+  {"codigo":"9980","nome":"PEGNEXUS CONEXOES FINANCEIRAS LTDA","multiloja":"Não","regras":[
+    {"escopo":"C6 BANK / convênio=INSS","tipo":"Retenção de Spread","incluirExcluir":"Incluir","pct":"0,50%","campanhaApenas":"Não","observacao":"BANCO C6 BANK (INSS)"},
+    {"escopo":"FACTA / convênio=INSS","tipo":"Divisão de Spread","incluirExcluir":"Incluir","pct":"100,00%","campanhaApenas":"Não","observacao":"FACTA FINANCEIRA (INSS)"}
+  ]}
+];
+const ALL_SPREAD_DATA = SPREAD_JSON.map(function(p){
+  var hier = p.codigo ? lookupHier(p.codigo) : null;
+  return {
+    codigo: p.codigo, nome: p.nome, multiloja: p.multiloja, regras: p.regras,
+    _regional: hier ? hier.regional : '',
+    _super:    hier ? hier.superintendente : '',
+    _comCod:   hier ? _codeOf(hier.comercial) : ''
+  };
+});
+let SPREAD_DATA = ALL_SPREAD_DATA;
+
+
 let filteredData = [];
 let searchActive = false;
 let currentPage  = 1;
@@ -7002,6 +7445,7 @@ function renderBancoBrowser(){
 }
 
 function filtrarPorBanco(banco){
+  _trackConsulta();
   bancoAtivo = banco;
   activeParceiro = null;
   document.getElementById('codigo-input').value = '';
@@ -7030,6 +7474,7 @@ function clearActiveKpiCards(){
 function buscarCodigo(cod){
   if(!cod){ clearSearch(); return; }
   cod=cod.trim();
+  _trackConsulta();
   let entry=lookupHier(cod);
   if(!entry){ const k=Object.keys(BY_CODIGO).find(k=>k.startsWith(cod)); if(k) entry=BY_CODIGO[k]; }
   if(!entry&&BY_REGIONAL[cod]) entry=BY_REGIONAL[cod][0];
@@ -7545,6 +7990,7 @@ function metaAplicarFiltroHierarquia(){
   var com = (document.getElementById('meta-filter-com')||{value:''}).value;
   var st  = (document.getElementById('meta-filter-status')||{value:''}).value;
   if(!reg && !com && !st){ metaLimpar(); return; }
+  _trackConsulta();
   document.getElementById('meta-input').value = '';
   var results = LEGADO_DATA.filter(function(r){
     if(reg && r._regional!==reg) return false;
@@ -7611,6 +8057,122 @@ function metaLimpar(){
 }
 
 
+/* ── Divisão de Spread (Negociação de Parceiros Estratégicos) ── */
+function spreadApplyAll(){
+  var query = (document.getElementById('spread-input')||{value:''}).value.trim();
+  var tipo  = (document.getElementById('spread-filter-tipo')||{value:''}).value;
+  var q = query.toLowerCase();
+  var matched = SPREAD_DATA.filter(function(p){
+    if(query && !((p.codigo && p.codigo.toLowerCase().indexOf(q)>=0) || (p.nome && p.nome.toLowerCase().indexOf(q)>=0))) return false;
+    if(tipo && !p.regras.some(function(r){ return r.tipo===tipo; })) return false;
+    return true;
+  });
+  spreadRenderResults(matched, tipo);
+}
+
+function spreadRenderResults(matched, tipo){
+  var empty  = document.getElementById('spread-empty');
+  var resDiv = document.getElementById('spread-results');
+  document.getElementById('spread-count').textContent =
+    matched.length+' parceiro'+(matched.length!==1?'s':'')+' encontrado'+(matched.length!==1?'s':'');
+  if(matched.length===0){
+    empty.style.display  = 'block';
+    resDiv.style.display = 'none';
+    document.getElementById('spread-cards').innerHTML = '';
+    return;
+  }
+  empty.style.display  = 'none';
+  resDiv.style.display = 'block';
+  spreadRenderCards(matched, tipo);
+}
+
+function spreadRenderCards(matched, tipo){
+  var wrap = document.getElementById('spread-cards');
+  wrap.innerHTML = '';
+  matched.forEach(function(p){
+    var regras = tipo ? p.regras.filter(function(r){ return r.tipo===tipo; }) : p.regras;
+    if(!regras.length) return;
+    var rowsHtml = regras.map(function(r){
+      var tipoColor = r.tipo.indexOf('Retenção')>=0 ? 'var(--accent2)' : 'var(--accent4)';
+      return '<tr style="border-bottom:1px solid var(--border);">'+
+        '<td style="padding:10px 14px;font-size:13px;">'+r.escopo+'</td>'+
+        '<td style="padding:10px 14px;font-size:12px;"><span style="color:'+tipoColor+';font-weight:600;">'+r.tipo+'</span></td>'+
+        '<td style="padding:10px 14px;font-size:12px;color:var(--muted);">'+r.incluirExcluir+'</td>'+
+        '<td style="padding:10px 14px;text-align:right;font-size:13px;font-weight:700;">'+r.pct+'</td>'+
+        '<td style="padding:10px 14px;font-size:12px;color:var(--muted);">'+r.campanhaApenas+'</td>'+
+        '<td style="padding:10px 14px;font-size:12px;color:var(--muted);">'+(r.observacao||'—')+'</td>'+
+        '</tr>';
+    }).join('');
+    var card = document.createElement('div');
+    card.className = 'table-wrap';
+    card.style.marginBottom = '18px';
+    card.style.overflowX = 'auto';
+    card.innerHTML =
+      '<div style="display:flex;align-items:center;gap:12px;padding:13px 16px;background:var(--surface2);border-bottom:1px solid var(--border);">'+
+        '<span style="font-family:Syne,sans-serif;font-weight:700;color:var(--accent);font-size:14px;">'+p.codigo+'</span>'+
+        '<span style="font-size:14px;font-weight:600;flex:1;">'+(p.nome||'—')+'</span>'+
+        (p.multiloja==='Sim' ? '<span class="badge active" style="font-size:10px;">Multiloja</span>' : '')+
+        '<span style="font-size:11px;color:var(--muted);">'+regras.length+' regra'+(regras.length!==1?'s':'')+'</span>'+
+      '</div>'+
+      '<table style="width:100%;border-collapse:collapse;font-size:13px;">'+
+        '<thead style="background:var(--surface2);">'+
+          '<tr>'+
+            '<th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);white-space:nowrap;">Escopo</th>'+
+            '<th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);white-space:nowrap;">Tipo</th>'+
+            '<th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);white-space:nowrap;">Incluir/Excluir</th>'+
+            '<th style="padding:9px 14px;text-align:right;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);white-space:nowrap;">%</th>'+
+            '<th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);white-space:nowrap;">Campanha Apenas</th>'+
+            '<th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);white-space:nowrap;">Observação</th>'+
+          '</tr>'+
+        '</thead>'+
+        '<tbody>'+rowsHtml+'</tbody>'+
+      '</table>';
+    wrap.appendChild(card);
+  });
+}
+
+function spreadHighlightKpi(){
+  var tipo = (document.getElementById('spread-filter-tipo')||{value:''}).value;
+  var cards = document.querySelectorAll('#spread-kpis .kpi-card');
+  cards.forEach(function(c){ c.style.opacity='1'; c.style.outline='none'; });
+  if(tipo){
+    var idx = tipo==='Retenção de Spread' ? 2 : (tipo==='Divisão de Spread' ? 3 : -1);
+    cards.forEach(function(c,i){ if(i!==idx) c.style.opacity='0.55'; });
+    if(idx>=0 && cards[idx]) cards[idx].style.outline='2px solid var(--accent)';
+  }
+}
+
+function spreadFiltrarTipo(tipo){
+  var sel = document.getElementById('spread-filter-tipo');
+  sel.value = (sel.value===tipo) ? '' : tipo;
+  spreadApplyAll();
+  spreadHighlightKpi();
+}
+
+function spreadLimpar(){
+  document.getElementById('spread-input').value = '';
+  var sel = document.getElementById('spread-filter-tipo'); if(sel) sel.value = '';
+  spreadApplyAll();
+  spreadHighlightKpi();
+}
+
+function spreadInit(){
+  var stats = { parceiros: SPREAD_DATA.length, regras: 0, retencao: 0, divisao: 0 };
+  SPREAD_DATA.forEach(function(p){
+    p.regras.forEach(function(r){
+      stats.regras++;
+      if(r.tipo==='Retenção de Spread') stats.retencao++;
+      else if(r.tipo==='Divisão de Spread') stats.divisao++;
+    });
+  });
+  document.getElementById('spread-kpi-parceiros').textContent = stats.parceiros;
+  document.getElementById('spread-kpi-regras').textContent    = stats.regras;
+  document.getElementById('spread-kpi-retencao').textContent  = stats.retencao;
+  document.getElementById('spread-kpi-divisao').textContent   = stats.divisao;
+  spreadApplyAll();
+}
+
+
 function switchTab(name){
   document.querySelectorAll('.tab-pane').forEach(function(p){ p.classList.remove('active'); });
   document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
@@ -7619,24 +8181,12 @@ function switchTab(name){
   if(pane) pane.classList.add('active');
   if(btn)  btn.classList.add('active');
   if(name==='indicadores') renderIndicadores();
+  if(name==='spread') spreadInit();
 }
 
-function renderIndicadores(){
-  var container = document.getElementById('bi-ranking-ativos');
+function _renderBiRanking(containerId, ranking, unidadeLabel){
+  var container = document.getElementById(containerId);
   if(!container) return;
-  var comMap = {};
-  HIERARCHY.forEach(function(h){
-    var cc = _codeOf(h.comercial);
-    if(cc && !comMap[cc]) comMap[cc] = soNome(h.comercial);
-  });
-  var counts = {};
-  ALL_RAW_DATA.forEach(function(r){
-    if(r.status!=='Ativo' || !r._comCod) return;
-    counts[r._comCod] = (counts[r._comCod]||0)+1;
-  });
-  var ranking = Object.keys(counts).map(function(cc){
-    return {nome: comMap[cc]||cc, count: counts[cc]};
-  }).sort(function(a,b){ return b.count-a.count; }).slice(0,15);
   if(ranking.length===0){
     container.innerHTML = '<p style="color:var(--muted);font-size:12px;">Nenhum dado dispon&iacute;vel.</p>';
     return;
@@ -7644,13 +8194,46 @@ function renderIndicadores(){
   var max = ranking[0].count;
   container.innerHTML = ranking.map(function(r,i){
     var pct = Math.max(4, Math.round((r.count/max)*100));
-    return '<div class="bi-bar-row" title="'+r.nome+' &mdash; '+r.count+' acordo(s) ativo(s)">'+
+    return '<div class="bi-bar-row" title="'+r.nome+' &mdash; '+r.count+' '+unidadeLabel+'">'+
       '<div class="bi-bar-rank">'+(i+1)+'</div>'+
       '<div class="bi-bar-label">'+r.nome+'</div>'+
       '<div class="bi-bar-track"><div class="bi-bar-fill" style="width:'+pct+'%"></div></div>'+
       '<div class="bi-bar-value">'+r.count+'</div>'+
     '</div>';
   }).join('');
+}
+
+function renderIndicadores(){
+  document.getElementById('bi-consultas-total').textContent = _getConsultaCount();
+
+  var comMap = {};
+  HIERARCHY.forEach(function(h){
+    var cc = _codeOf(h.comercial);
+    if(cc && !comMap[cc]) comMap[cc] = soNome(h.comercial);
+  });
+  var countsAtivos = {};
+  ALL_RAW_DATA.forEach(function(r){
+    if(r.status!=='Ativo' || !r._comCod) return;
+    countsAtivos[r._comCod] = (countsAtivos[r._comCod]||0)+1;
+  });
+  var rankingAtivos = Object.keys(countsAtivos).map(function(cc){
+    return {nome: comMap[cc]||cc, count: countsAtivos[cc]};
+  }).sort(function(a,b){ return b.count-a.count; }).slice(0,15);
+  _renderBiRanking('bi-ranking-ativos', rankingAtivos, 'acordo(s) ativo(s)');
+
+  var countsMeta = {};
+  var nomesParceiro = {};
+  ALL_LEGADO_DATA.forEach(function(r){
+    var c = (r.classificacao||'').toLowerCase();
+    var atingiu = c.indexOf('atingiu a meta')>=0 && c.indexOf('não atingiu')<0 && c.indexOf('nao atingiu')<0;
+    if(!atingiu || !r.codigo) return;
+    countsMeta[r.codigo] = (countsMeta[r.codigo]||0)+1;
+    if(!nomesParceiro[r.codigo]) nomesParceiro[r.codigo] = r.nome;
+  });
+  var rankingMeta = Object.keys(countsMeta).map(function(cod){
+    return {nome: cod+' - '+(nomesParceiro[cod]||''), count: countsMeta[cod]};
+  }).sort(function(a,b){ return b.count-a.count; }).slice(0,15);
+  _renderBiRanking('bi-ranking-meta', rankingMeta, 'mês(es) com meta atingida');
 }
 
 
@@ -7756,6 +8339,7 @@ function doLogout(){
   // Reset filters
   if(typeof LEGADO_DATA !== 'undefined') LEGADO_DATA = ALL_LEGADO_DATA;
   if(typeof RAW_DATA !== 'undefined') RAW_DATA = ALL_RAW_DATA;
+  if(typeof SPREAD_DATA !== 'undefined') SPREAD_DATA = ALL_SPREAD_DATA;
   // Limpa busca/resultados/filtros do usuário anterior — não deve sobrar
   // nada visível de uma sessão pra outra
   var fs = document.getElementById('filter-super'); if(fs) fs.value='';
@@ -7764,6 +8348,8 @@ function doLogout(){
   var fst = document.getElementById('filter-status'); if(fst) fst.value='';
   clearSearch();
   metaLimpar();
+  var si = document.getElementById('spread-input'); if(si) si.value='';
+  var sft = document.getElementById('spread-filter-tipo'); if(sft) sft.value='';
   var btnInd = document.getElementById('tab-btn-indicadores');
   if(btnInd) btnInd.style.display = 'none';
   switchTab('acordos');
@@ -7813,6 +8399,7 @@ function _applyUserFilter(){
   if(!__currentUser || __currentUser.role === 'admin'){
     LEGADO_DATA = ALL_LEGADO_DATA;
     RAW_DATA = ALL_RAW_DATA;
+    SPREAD_DATA = ALL_SPREAD_DATA;
     populateHierarchyFilters(HIERARCHY);
     return;
   }
@@ -7830,6 +8417,9 @@ function _applyUserFilter(){
     // For RAW_JSON: match pelo código do superintendente já resolvido em _super
     RAW_DATA = ALL_RAW_DATA.filter(function(r){
       return _codeOf(r._super) === supCod;
+    });
+    SPREAD_DATA = ALL_SPREAD_DATA.filter(function(p){
+      return _codeOf(p._super) === supCod;
     });
     populateHierarchyFilters(team);
     return;
@@ -7849,6 +8439,9 @@ function _applyUserFilter(){
     RAW_DATA = ALL_RAW_DATA.filter(function(r){
       return _codeOf(r._regional) === regCod;
     });
+    SPREAD_DATA = ALL_SPREAD_DATA.filter(function(p){
+      return _codeOf(p._regional) === regCod;
+    });
     populateHierarchyFilters(timeReg);
     return;
   }
@@ -7862,6 +8455,10 @@ function _applyUserFilter(){
   RAW_DATA = ALL_RAW_DATA.filter(function(r){
     var e = ((r.colE||'') + ' ' + (r.colF||'')).toUpperCase();
     return _nomeMatch(e, uNome);
+  });
+  // For SPREAD: match pelo código do próprio comercial (_comCod), resolvido via hierarquia do código do parceiro
+  SPREAD_DATA = ALL_SPREAD_DATA.filter(function(p){
+    return p._comCod === __currentUser.cod;
   });
   var meuEntry = HIERARCHY.filter(function(h){ return _nomeMatch(soNome(h.comercial).toUpperCase(), uNome); });
   populateHierarchyFilters(meuEntry);
