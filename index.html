@@ -8086,6 +8086,11 @@ function spreadRenderResults(matched, tipo){
   spreadRenderCards(matched, tipo);
 }
 
+function spreadSplitEscopo(escopo){
+  var parts = (escopo||'').split(' / convênio=');
+  return { banco: parts[0]||'—', convenio: parts[1]||'—' };
+}
+
 function spreadRenderCards(matched, tipo){
   var wrap = document.getElementById('spread-cards');
   wrap.innerHTML = '';
@@ -8094,13 +8099,15 @@ function spreadRenderCards(matched, tipo){
     if(!regras.length) return;
     var rowsHtml = regras.map(function(r){
       var tipoColor = r.tipo.indexOf('Retenção')>=0 ? 'var(--accent2)' : 'var(--accent4)';
+      var esc = spreadSplitEscopo(r.escopo);
       return '<tr style="border-bottom:1px solid var(--border);">'+
-        '<td style="padding:10px 14px;font-size:13px;">'+r.escopo+'</td>'+
+        '<td style="padding:10px 14px;font-size:13px;">'+esc.banco+'</td>'+
+        '<td style="padding:10px 14px;font-size:12px;color:var(--muted);">'+esc.convenio+'</td>'+
         '<td style="padding:10px 14px;font-size:12px;"><span style="color:'+tipoColor+';font-weight:600;">'+r.tipo+'</span></td>'+
         '<td style="padding:10px 14px;font-size:12px;color:var(--muted);">'+r.incluirExcluir+'</td>'+
         '<td style="padding:10px 14px;text-align:right;font-size:13px;font-weight:700;">'+r.pct+'</td>'+
-        '<td style="padding:10px 14px;font-size:12px;color:var(--muted);">'+r.campanhaApenas+'</td>'+
         '<td style="padding:10px 14px;font-size:12px;color:var(--muted);">'+(r.observacao||'—')+'</td>'+
+        '<td style="padding:10px 14px;font-size:12px;color:var(--muted);">'+(p.multiloja||'—')+'</td>'+
         '</tr>';
     }).join('');
     var card = document.createElement('div');
@@ -8117,12 +8124,13 @@ function spreadRenderCards(matched, tipo){
       '<table style="width:100%;border-collapse:collapse;font-size:13px;">'+
         '<thead style="background:var(--surface2);">'+
           '<tr>'+
-            '<th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);white-space:nowrap;">Escopo</th>'+
+            '<th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);white-space:nowrap;">Banco</th>'+
+            '<th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);white-space:nowrap;">Convênio</th>'+
             '<th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);white-space:nowrap;">Tipo</th>'+
             '<th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);white-space:nowrap;">Incluir/Excluir</th>'+
             '<th style="padding:9px 14px;text-align:right;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);white-space:nowrap;">%</th>'+
-            '<th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);white-space:nowrap;">Campanha Apenas</th>'+
             '<th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);white-space:nowrap;">Observação</th>'+
+            '<th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);white-space:nowrap;">Multiloja</th>'+
           '</tr>'+
         '</thead>'+
         '<tbody>'+rowsHtml+'</tbody>'+
