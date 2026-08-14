@@ -564,15 +564,15 @@
   <div class="tab-pane" id="tab-spread">
 
     <div class="kpi-grid" id="spread-kpis">
-      <div class="kpi-card blue">
+      <div class="kpi-card blue" onclick="spreadMostrarTodos()" style="cursor:pointer;">
         <div class="kpi-label">Parceiros com Negociação</div>
         <div class="kpi-value" id="spread-kpi-parceiros">—</div>
-        <div class="kpi-sub">total cadastrado</div>
+        <div class="kpi-sub">total cadastrado (clique p/ ver todos)</div>
       </div>
-      <div class="kpi-card amber">
+      <div class="kpi-card amber" onclick="spreadMostrarTodos()" style="cursor:pointer;">
         <div class="kpi-label">Regras Ativas</div>
         <div class="kpi-value" id="spread-kpi-regras">—</div>
-        <div class="kpi-sub">total cadastrado</div>
+        <div class="kpi-sub">total cadastrado (clique p/ ver todos)</div>
       </div>
       <div class="kpi-card green" onclick="spreadFiltrarTipo('Retenção de Spread')" style="cursor:pointer;">
         <div class="kpi-label">Retenção de Spread</div>
@@ -8145,6 +8145,13 @@ function spreadHighlightKpi(){
 function spreadFiltrarTipo(tipo){
   var sel = document.getElementById('spread-filter-tipo');
   sel.value = (sel.value===tipo) ? '' : tipo;
+  spreadApplyAll();
+  spreadHighlightKpi();
+}
+
+function spreadMostrarTodos(){
+  var sel = document.getElementById('spread-filter-tipo');
+  sel.value = '';
   spreadApplyAll();
   spreadHighlightKpi();
 }
