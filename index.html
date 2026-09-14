@@ -564,15 +564,15 @@
   <div class="tab-pane" id="tab-spread">
 
     <div class="kpi-grid" id="spread-kpis">
-      <div class="kpi-card blue">
+      <div class="kpi-card blue" onclick="spreadMostrarTodos()" style="cursor:pointer;">
         <div class="kpi-label">Parceiros com Negociação</div>
         <div class="kpi-value" id="spread-kpi-parceiros">—</div>
-        <div class="kpi-sub">total cadastrado</div>
+        <div class="kpi-sub">total cadastrado (clique p/ ver todos)</div>
       </div>
-      <div class="kpi-card amber">
+      <div class="kpi-card amber" onclick="spreadMostrarTodos()" style="cursor:pointer;">
         <div class="kpi-label">Regras Ativas</div>
         <div class="kpi-value" id="spread-kpi-regras">—</div>
-        <div class="kpi-sub">total cadastrado</div>
+        <div class="kpi-sub">total cadastrado (clique p/ ver todos)</div>
       </div>
       <div class="kpi-card green" onclick="spreadFiltrarTipo('Retenção de Spread')" style="cursor:pointer;">
         <div class="kpi-label">Retenção de Spread</div>
@@ -675,6 +675,10 @@ const HIERARCHY = [{"codigo":"0008","nome":"0008 - B.C.L ASSESSORIA E NEGOCIOS L
 
 const USERS_DATA = [
   {"cod":"admin","nome":"Administrador","email":"coordenacao.ascom@novapromotora.com","role":"admin","regional":"","super":""},
+  {"cod":"3485","nome":"Administrador","email":"","role":"admin","regional":"","super":""},
+  {"cod":"8899","nome":"Administrador","email":"","role":"admin","regional":"","super":""},
+  {"cod":"7256","nome":"Administrador","email":"","role":"admin","regional":"","super":""},
+  {"cod":"4997","nome":"Administrador","email":"","role":"admin","regional":"","super":""},
   {"cod":"1003","nome":"JHONATHAN ROSSI DA CRUZ","email":"jhonathan.cruz@novafinanceira.com","role":"super","regional":"","super":""},
   {"cod":"1803","nome":"JESSICA COUTINHO DE AZEVEDO","email":"jessica.azevedo@nexxopromotora.com.br","role":"super","regional":"","super":""},
   {"cod":"2389","nome":"FELIPE CUNHA DE JESUS","email":"","role":"super","regional":"","super":""},
@@ -7381,17 +7385,6 @@ const ALL_SPREAD_DATA = SPREAD_JSON.map(function(p){
   };
 });
 let SPREAD_DATA = ALL_SPREAD_DATA;
-const SPREAD_STATS = (function(){
-  var totalRegras=0, retencao=0, divisao=0;
-  SPREAD_JSON.forEach(function(p){
-    p.regras.forEach(function(r){
-      totalRegras++;
-      if(r.tipo==='Retenção de Spread') retencao++;
-      else if(r.tipo==='Divisão de Spread') divisao++;
-    });
-  });
-  return { parceiros: SPREAD_JSON.length, regras: totalRegras, retencao: retencao, divisao: divisao };
-})();
 
 
 let filteredData = [];
@@ -8097,6 +8090,11 @@ function spreadRenderResults(matched, tipo){
   spreadRenderCards(matched, tipo);
 }
 
+function spreadSplitEscopo(escopo){
+  var parts = (escopo||'').split(' / convênio=');
+  return { banco: parts[0]||'—', convenio: parts[1]||'TODOS' };
+}
+
 function spreadRenderCards(matched, tipo){
   var wrap = document.getElementById('spread-cards');
   wrap.innerHTML = '';
@@ -8105,13 +8103,14 @@ function spreadRenderCards(matched, tipo){
     if(!regras.length) return;
     var rowsHtml = regras.map(function(r){
       var tipoColor = r.tipo.indexOf('Retenção')>=0 ? 'var(--accent2)' : 'var(--accent4)';
+      var esc = spreadSplitEscopo(r.escopo);
       return '<tr style="border-bottom:1px solid var(--border);">'+
-        '<td style="padding:10px 14px;font-size:13px;">'+r.escopo+'</td>'+
+        '<td style="padding:10px 14px;font-size:13px;">'+esc.banco+'</td>'+
+        '<td style="padding:10px 14px;font-size:12px;color:var(--muted);">'+esc.convenio+'</td>'+
         '<td style="padding:10px 14px;font-size:12px;"><span style="color:'+tipoColor+';font-weight:600;">'+r.tipo+'</span></td>'+
         '<td style="padding:10px 14px;font-size:12px;color:var(--muted);">'+r.incluirExcluir+'</td>'+
         '<td style="padding:10px 14px;text-align:right;font-size:13px;font-weight:700;">'+r.pct+'</td>'+
-        '<td style="padding:10px 14px;font-size:12px;color:var(--muted);">'+r.campanhaApenas+'</td>'+
-        '<td style="padding:10px 14px;font-size:12px;color:var(--muted);">'+(r.observacao||'—')+'</td>'+
+        '<td style="padding:10px 14px;font-size:12px;color:var(--muted);">'+(p.multiloja||'—')+'</td>'+
         '</tr>';
     }).join('');
     var card = document.createElement('div');
@@ -8128,12 +8127,12 @@ function spreadRenderCards(matched, tipo){
       '<table style="width:100%;border-collapse:collapse;font-size:13px;">'+
         '<thead style="background:var(--surface2);">'+
           '<tr>'+
-            '<th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);white-space:nowrap;">Escopo</th>'+
+            '<th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);white-space:nowrap;">Banco</th>'+
+            '<th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);white-space:nowrap;">Convênio</th>'+
             '<th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);white-space:nowrap;">Tipo</th>'+
             '<th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);white-space:nowrap;">Incluir/Excluir</th>'+
             '<th style="padding:9px 14px;text-align:right;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);white-space:nowrap;">%</th>'+
-            '<th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);white-space:nowrap;">Campanha Apenas</th>'+
-            '<th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);white-space:nowrap;">Observação</th>'+
+            '<th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);white-space:nowrap;">Multiloja</th>'+
           '</tr>'+
         '</thead>'+
         '<tbody>'+rowsHtml+'</tbody>'+
@@ -8160,6 +8159,13 @@ function spreadFiltrarTipo(tipo){
   spreadHighlightKpi();
 }
 
+function spreadMostrarTodos(){
+  var sel = document.getElementById('spread-filter-tipo');
+  sel.value = '';
+  spreadApplyAll();
+  spreadHighlightKpi();
+}
+
 function spreadLimpar(){
   document.getElementById('spread-input').value = '';
   var sel = document.getElementById('spread-filter-tipo'); if(sel) sel.value = '';
@@ -8168,10 +8174,18 @@ function spreadLimpar(){
 }
 
 function spreadInit(){
-  document.getElementById('spread-kpi-parceiros').textContent = SPREAD_STATS.parceiros;
-  document.getElementById('spread-kpi-regras').textContent    = SPREAD_STATS.regras;
-  document.getElementById('spread-kpi-retencao').textContent  = SPREAD_STATS.retencao;
-  document.getElementById('spread-kpi-divisao').textContent   = SPREAD_STATS.divisao;
+  var stats = { parceiros: SPREAD_DATA.length, regras: 0, retencao: 0, divisao: 0 };
+  SPREAD_DATA.forEach(function(p){
+    p.regras.forEach(function(r){
+      stats.regras++;
+      if(r.tipo==='Retenção de Spread') stats.retencao++;
+      else if(r.tipo==='Divisão de Spread') stats.divisao++;
+    });
+  });
+  document.getElementById('spread-kpi-parceiros').textContent = stats.parceiros;
+  document.getElementById('spread-kpi-regras').textContent    = stats.regras;
+  document.getElementById('spread-kpi-retencao').textContent  = stats.retencao;
+  document.getElementById('spread-kpi-divisao').textContent   = stats.divisao;
   spreadApplyAll();
 }
 
@@ -8342,6 +8356,7 @@ function doLogout(){
   // Reset filters
   if(typeof LEGADO_DATA !== 'undefined') LEGADO_DATA = ALL_LEGADO_DATA;
   if(typeof RAW_DATA !== 'undefined') RAW_DATA = ALL_RAW_DATA;
+  if(typeof SPREAD_DATA !== 'undefined') SPREAD_DATA = ALL_SPREAD_DATA;
   // Limpa busca/resultados/filtros do usuário anterior — não deve sobrar
   // nada visível de uma sessão pra outra
   var fs = document.getElementById('filter-super'); if(fs) fs.value='';
@@ -8420,6 +8435,9 @@ function _applyUserFilter(){
     RAW_DATA = ALL_RAW_DATA.filter(function(r){
       return _codeOf(r._super) === supCod;
     });
+    SPREAD_DATA = ALL_SPREAD_DATA.filter(function(p){
+      return _codeOf(p._super) === supCod;
+    });
     populateHierarchyFilters(team);
     return;
   }
@@ -8438,6 +8456,9 @@ function _applyUserFilter(){
     RAW_DATA = ALL_RAW_DATA.filter(function(r){
       return _codeOf(r._regional) === regCod;
     });
+    SPREAD_DATA = ALL_SPREAD_DATA.filter(function(p){
+      return _codeOf(p._regional) === regCod;
+    });
     populateHierarchyFilters(timeReg);
     return;
   }
@@ -8451,6 +8472,10 @@ function _applyUserFilter(){
   RAW_DATA = ALL_RAW_DATA.filter(function(r){
     var e = ((r.colE||'') + ' ' + (r.colF||'')).toUpperCase();
     return _nomeMatch(e, uNome);
+  });
+  // For SPREAD: match pelo código do próprio comercial (_comCod), resolvido via hierarquia do código do parceiro
+  SPREAD_DATA = ALL_SPREAD_DATA.filter(function(p){
+    return p._comCod === __currentUser.cod;
   });
   var meuEntry = HIERARCHY.filter(function(h){ return _nomeMatch(soNome(h.comercial).toUpperCase(), uNome); });
   populateHierarchyFilters(meuEntry);
@@ -8492,4 +8517,7 @@ window.addEventListener('keydown',function(e){
   if(document.getElementById('change-pwd-overlay').style.display==='flex' && e.key==='Enter') doChangePwd();
 });
 
-window.addEventListener('load',function(){ authInit()
+window.addEventListener('load',function(){ authInit(); });
+</script>
+</body>
+</html>
